@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<!-- saved from url=(0237)file:///Users/ag/Library/Application%20Support/Claude/local-agent-mode-sessions/89cebed2-e1ec-4070-8ab1-65a05a5b34c5/5d2dc63e-a52c-49e4-b661-a3aa0e41c5aa/local_63ac5540-c69a-46d1-b4da-161484ab0572/outputs/BE101_transcript_anonymized.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to BE101! — BE101</title>
+<link href="./orientation_lesson_example_files/css2" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f1ec;
+    --surface: #ffffff;
+    --tutor-bg: #ffffff;
+    --tutor-border: #e2ddd5;
+    --student-bg: #1a1a2e;
+    --student-text: #f0ede8;
+    --accent: #c9653a;
+    --accent-light: #f5e6de;
+    --text-primary: #1a1a2e;
+    --text-secondary: #6b6577;
+    --text-muted: #9a92a6;
+    --canvas-bg: #faf8f5;
+    --canvas-border: #e8e2d9;
+    --code-bg: #f7f5f2;
+    --link: #3d6b8e;
+    --hr: #e2ddd5;
+    --font-body: 'DM Sans', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow-sm: 0 1px 3px rgba(26,26,46,0.06);
+  }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 64px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 16px;
+    padding: 32px 24px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--tutor-border);
+  }
+  .header .course-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .header .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .header .csat-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg);
+    border: 1px solid var(--tutor-border);
+    padding: 5px 14px;
+    border-radius: 20px;
+  }
+  .csat-score {
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* ── Analysis line ── */
+  .analysis {
+    margin: 14px 0 8px;
+    padding: 14px 20px;
+    font-size: 14px;
+    color: #5a4a20;
+    line-height: 1.6;
+    background: #fffbf0;
+    border: 1px solid #f0e4c8;
+    border-left: 4px solid #e8b84b;
+    border-radius: 0 10px 10px 0;
+  }
+  .analysis-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #b8922e;
+    margin-bottom: 4px;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    margin-bottom: 32px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .legend-dot.green { background: #eef8f0; border: 1.5px solid #a5d6a7; }
+  .legend-dot.red { background: #fdf2f2; border: 1.5px solid #ef9a9a; }
+
+  /* ── Chat area ── */
+  .chat { display: flex; flex-direction: column; gap: 20px; }
+
+  /* ── Message row ── */
+  .msg-row { display: flex; gap: 12px; max-width: 88%; animation: fadeSlideIn 0.3s ease both; }
+  .msg-row.tutor { align-self: flex-start; }
+  .msg-row.student { align-self: flex-end; flex-direction: row-reverse; }
+  @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── Avatar ── */
+  .avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; margin-top: 2px; }
+  .tutor .avatar { background: linear-gradient(135deg, var(--accent), #e07a4f); color: #fff; }
+  .student .avatar { background: var(--student-bg); color: var(--student-text); }
+
+  /* ── Bubble ── */
+  .bubble { padding: 14px 18px; border-radius: var(--radius); font-size: 14.5px; line-height: 1.65; box-shadow: var(--shadow-sm); }
+  .tutor .bubble { background: var(--tutor-bg); border: 1px solid var(--tutor-border); border-top-left-radius: 4px; color: var(--text-primary); }
+  .student .bubble { background: var(--student-bg); border: 1px solid transparent; border-top-right-radius: 4px; color: var(--student-text); }
+
+  /* ── Sender label ── */
+  .sender-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .tutor .sender-label { color: var(--accent); }
+  .student .sender-label { color: rgba(240,237,232,0.55); }
+
+  /* ── Typography inside bubbles ── */
+  .bubble strong { font-weight: 600; }
+  .bubble em { font-style: italic; }
+  .bubble a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+  .student .bubble a { color: #8bb8d4; }
+  .bubble code { font-family: var(--font-mono); font-size: 13px; background: var(--code-bg); padding: 2px 6px; border-radius: 5px; color: var(--accent); }
+  .student .bubble code { background: rgba(255,255,255,0.1); color: #f0c090; }
+  .bubble blockquote { border-left: 3px solid var(--accent); margin: 10px 0; padding: 6px 14px; color: var(--text-secondary); font-style: italic; background: rgba(201,101,58,0.04); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .student .bubble blockquote { border-left-color: rgba(255,255,255,0.3); color: rgba(240,237,232,0.7); background: rgba(255,255,255,0.05); }
+  .bubble hr { border: none; border-top: 1px solid var(--hr); margin: 14px 0; }
+  .student .bubble hr { border-top-color: rgba(255,255,255,0.12); }
+  .bubble ul, .bubble ol { margin: 8px 0; padding-left: 22px; }
+  .bubble li { margin-bottom: 4px; }
+  .bubble p { margin-bottom: 10px; }
+  .bubble p:last-child { margin-bottom: 0; }
+
+  /* ── Canvas submission card ── */
+  .canvas-card { background: var(--canvas-bg); border: 1px dashed var(--canvas-border); border-radius: var(--radius-sm); padding: 14px 16px; margin: 8px 0; font-size: 13.5px; }
+  .canvas-card .canvas-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .student .canvas-card { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); color: var(--student-text); }
+  .student .canvas-card .canvas-label { color: rgba(240,237,232,0.45); }
+
+  /* ── Commentary annotations ── */
+  .commentary-wrapper { margin: 20px 0 28px; position: relative; }
+  .commentary { max-width: 82%; padding: 12px 18px; border-radius: 20px; font-size: 13.5px; color: #444; line-height: 1.6; position: relative; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+
+  .commentary.type-positive { background: #eef8f0; margin-left: auto; margin-right: 24px; border: 1px solid #c8e6cc; }
+  .commentary.type-positive::before, .commentary.type-positive::after { content: ''; position: absolute; border-radius: 50%; background: #dff0e2; border: 1px solid #c8e6cc; }
+  .commentary.type-positive::before { width: 14px; height: 14px; bottom: -12px; right: 18px; }
+  .commentary.type-positive::after { width: 8px; height: 8px; bottom: -20px; right: 12px; }
+  .commentary.type-positive .comment-tag { background: rgba(46,125,50,0.1); color: #2e7d32; }
+
+  .commentary.type-warning { background: #fdf2f2; margin-right: auto; margin-left: 24px; border: 1px solid #ecc8c8; }
+  .commentary.type-warning::before, .commentary.type-warning::after { content: ''; position: absolute; border-radius: 50%; background: #f8e0e0; border: 1px solid #ecc8c8; }
+  .commentary.type-warning::before { width: 14px; height: 14px; bottom: -12px; left: 18px; }
+  .commentary.type-warning::after { width: 8px; height: 8px; bottom: -20px; left: 12px; }
+  .commentary.type-warning .comment-tag { background: rgba(198,40,40,0.1); color: #c62828; }
+
+  .commentary .comment-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; padding: 3px 9px; border-radius: 5px; }
+  .commentary .comment-tag .tag-emoji { font-size: 13px; }
+  .commentary .comment-text { font-size: 13.5px; line-height: 1.6; }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .container { padding: 16px 12px 48px; }
+    .msg-row { max-width: 95%; }
+    .header h1 { font-size: 18px; }
+    .bubble { padding: 12px 14px; font-size: 14px; }
+    .avatar { width: 28px; height: 28px; font-size: 13px; }
+    .commentary { max-width: 90%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="course-badge">BE101</div>
+    <h1>Welcome to BE101!</h1>
+    <div class="meta">Student A (anonymized) · anonymized@example.com</div>
+    <div class="meta">July 22, 2026 · 26 messages</div>
+    <div class="csat-line">Lesson CSAT: <span class="csat-score">4.85</span> / 5</div>
+  </div>
+
+  
+  
+
+  <div class="chat">
+    <div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Hi there! Let me get your next lesson ready — this should just take a moment.</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Welcome to BE101 — Web Fundamentals! 🎯</p>
+<p>Before we get into the course — what do you think happens behind the scenes when you open a website? Like, what actually makes it work?</p></div></div>
+
+<div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>The browser sends an API request to the server and receives back a promise, followed by fulfillment of that promise</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Nice — you're already thinking in terms of requests and Promises, which tells me FE101 stuck with you. You've got the right instinct: there's a conversation happening between the browser and a server.</p>
+<p>But that's just one layer. When you type a URL and hit enter, there's also the question of <em>how the browser finds the server in the first place</em>, what format the response comes back in, and how that raw data becomes the page you actually see. That whole journey — from keystroke to rendered pixels — is what this course unpacks.</p>
+<p>Here's the big picture: nearly every software product you'll ever work on lives on the web. Whether you end up building backends, frontends, APIs, or AI-powered applications — it all runs through web infrastructure. Understanding how the web works isn't a specialty. It's the foundation everything else sits on.</p>
+<p>You've already written code in Python and JavaScript in previous courses. But that code ran locally — on your machine, in a terminal. In this course, your code starts running in a browser, reaching real servers, and being visible to anyone with a URL. That's a big jump.</p>
+<p>So let me ask — what kind of work do you want to do after this degree?</p></div></div>
+
+<div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>Can you give examples?</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Sure! Here are a few directions this degree can take you:</p>
+<ul>
+<li><strong>Frontend developer</strong> — you build what users see and interact with: layouts, buttons, forms, animations. Think of the Netflix interface or a dashboard — that's frontend work.</li>
+<li><strong>Backend developer</strong> — you build the APIs and services that frontend apps talk to. You'd handle data, authentication, business logic — the engine behind the scenes.</li>
+<li><strong>Full-stack developer</strong> — you do both. You can ship a feature end-to-end without waiting on another team.</li>
+<li><strong>AI engineer</strong> — even AI needs a way to reach users. You'd ship models through web interfaces — a chatbot, a recommendation engine, a search tool. The web is how people interact with AI.</li>
+</ul>
+<p>Every one of these runs on web infrastructure. This course is where you stop writing code in isolation and start building things people can actually use.</p>
+<p>So with those in mind — which of those directions excites you the most?</p></div></div>
+
+<div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>What do you mean by shipping models through web interfaces?</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Great question. Think about ChatGPT — there's a powerful AI model running on a server somewhere, but you interact with it through a web page. You type in a box, hit send, and text appears on screen.</p>
+<p>"Shipping a model through a web interface" means building that bridge — the web page that collects user input, sends it to the model on the server, and displays the response. The model is the brain; the web interface is how people actually reach it.</p>
+<p>Without the web layer, an AI model is just code running on a machine that nobody can talk to.</p>
+<p>Does that make it clearer? And back to my question — any of those directions sound like where you'd want to head?</p></div></div>
+
+<div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>AI Software Engineer</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>That's a great path. And here's the thing — as an AI software engineer, you won't just be training models. You'll be building the web interfaces that let people use them. Search bars, chat windows, recommendation panels, form-driven tools — all of that is web development. This course gives you the foundation to ship AI to real users.</p>
+<p>By the end of BE101, you'll have built a real website — styled, interactive, pulling live data from an API — and you'll understand every layer of how it reaches someone's screen. That's directly relevant to what you want to do.</p>
+<p>Let me walk you through how the course is structured. It's built around <strong>four units</strong>:</p>
+<p><strong>Unit 1 — How the web works:</strong> We start with the invisible stuff — what actually happens when you type a URL and hit enter. You'll learn how browsers find servers (DNS), how they communicate (HTTP), what URLs really mean, and how data moves as JSON. By the end, you'll be able to trace the complete journey of a web request from start to finish.</p>
+<p><strong>Unit 2 — Building with HTML and CSS:</strong> Now you start creating. You'll build real web pages with HTML — the structure — and CSS — the styling. You'll learn semantic elements, the box model, flexbox, debugging with DevTools, and put it all together into a styled multi-page site.</p>
+<p><strong>Unit 3 — Making pages interactive with JS:</strong> This is where JavaScript enters the browser. You'll learn how the DOM works, how to change the page with code, respond to clicks and user input, and build forms that actually do something. By the end, you'll build an interactive page from scratch.</p>
+<p><strong>Unit 4 — Connecting to data:</strong> The finale. You'll deploy a page to the live web, fetch real data from APIs, and render it dynamically. The course ends with you building a complete data-driven web page — combining everything from all four units.</p>
+<p>Does this make sense as a path? Any questions?</p></div></div>
+
+<div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>What is the DOM?</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Good question — the DOM is exactly the kind of thing we'll dig into in <strong>Unit 3</strong>. I don't want to gloss over it with a shallow answer, but I also don't want to jump ahead and steal the thunder of that unit.</p>
+<p>For now, think of it as the live version of your web page that JavaScript can reach into and change — without reloading the page. That's the teaser. We'll get hands-on with it later.</p>
+<p>Anything else you're curious about, or shall we talk about the tools you'll be using in this course?</p></div></div>
+
+<div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>[system: user returned to lesson, welcome them back and remind them what you are teaching]</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Welcome back! We're in the BE101 orientation lesson — your introduction to Web Fundamentals. We've covered why the web matters for your AI engineering path and walked through all four units. You asked about the DOM, which we'll tackle in Unit 3.</p>
+<p>Next up: the tools you'll use in this course. Ready to dive in?</p></div></div>
+
+<div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>Yes, let's start</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>In this course, you'll build things for real — not in a simulated environment. You'll write code in a professional code editor and see your work come alive in an actual browser.</p>
+<p><strong>VS Code</strong> is the code editor you'll use throughout the course. It's the same tool professional web developers use every day. If you don't have it installed yet, don't worry — we'll set it up together in the next lesson.</p>
+<p><strong>The browser is your canvas.</strong> Unlike previous courses where you ran code in a terminal, here your output is a web page. You'll write an HTML file, save it, and open it in your browser to see it render. That instant feedback loop — write, save, refresh, see — is how web developers work.</p>
+<p><strong>DevTools</strong> is your browser's built-in developer tools. It lets you inspect any web page, see the HTML structure, debug CSS, and watch network requests in real time. It's like X-ray vision for the web — and you'll use it constantly throughout this course.</p>
+<p>One important thing: for most of this course, you'll be working in VS Code and the browser, not in the platform's internal code editor. That's intentional — we want you working like a real developer.</p>
+<p>Make sense so far? Ready for the next part?</p></div></div>
+
+<div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>Yes, it makes sense</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>You're not starting from zero. Let's talk about what you're bringing into this course.</p>
+<p><strong>From FE101 (JavaScript &amp; TypeScript):</strong> You already know JavaScript — variables, functions, arrays, objects, async/await, and Promises. (You showed that earlier when you mentioned Promises unprompted!) In this course, you'll use that same JavaScript, but now it runs inside a browser instead of Node.js. The language is the same — the environment changes.</p>
+<p><strong>From CS101 and CS103:</strong> You know how to think about code structure, break problems down, and organize your work. That carries directly into organizing web projects across HTML, CSS, and JS files.</p>
+<p><strong>From PY101 and CS1020:</strong> You've built problem-solving habits and understand data structures. When you parse JSON from an API or loop through data to render it on a page, those skills kick in.</p>
+<p>So you already know how to code. This course is about learning <em>where</em> that code runs, <em>what</em> it can control, and <em>how</em> it reaches real users through the web.</p>
+<p>Any questions about what's expected or how this connects to what you've already done?</p></div></div>
+
+<div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>Is DevTools hard to learn?</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Not at all — and that's coming from someone who'll be using it hands-on within the next few lessons. DevTools is visual and exploratory by nature. You click on an element, you see its styles. You open the Network tab, you see requests happening in real time. It's more like clicking around an app than memorizing commands.</p>
+<p>You'll pick it up naturally as we go — one tab at a time, tied to whatever we're building.</p>
+<p>Ready to talk about grading and reviews?</p></div></div>
+
+<div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>Yes, let's continue</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Each unit ends with a <strong>review</strong> of the material covered in that unit. The final unit concludes with a comprehensive review of the full course.</p>
+<p>Here's how the grades break down:</p>
+<ul>
+<li><strong>Reviews 1–3</strong> are worth <strong>10% each</strong> (30% total). They're <strong>not timed</strong> and allow <strong>unlimited retakes</strong>.</li>
+<li><strong>The last unit review</strong> is worth <strong>60%</strong>. It's <strong>timed</strong> and allows <strong>only one retake</strong>.</li>
+<li><strong>Weekly discussions</strong> are worth <strong>10%</strong>, based on participation in all weekly discussions until the end date of the term.</li>
+<li>You can also earn up to <strong>10 bonus points</strong> for submitting and passing all reviews on time.</li>
+</ul>
+<p>All reviews are <strong>multiple-choice questions</strong> focused on practical understanding — reading code, predicting output, debugging, and reasoning about how things work. External AI tools are not permitted during any review.</p>
+<p>This is the same structure you saw in FE101, so it should feel familiar. Any questions about any of this?</p></div></div>
+
+<div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>no</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>That covers everything in this orientation. You've got the full picture — why the web matters for your AI engineering path, what each of the four units covers, the tools you'll use, and how grading works.</p>
+<p>Any remaining questions before we wrap up, or anything you'd like to revisit?</p></div></div>
+
+<div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>No more questions for now</p></div></div>
+
+<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Great orientation! 🎯 You now know the full course roadmap — from how the web works under the hood to building styled, interactive, data-driven pages. Your AI engineering goal gives everything we'll build a clear purpose. Next up is <strong>Clients and Servers</strong> — where we start tracing what actually happens when you type a URL. See you there!</p></div></div>
+  </div>
+
+</div>
+
+</body></html>

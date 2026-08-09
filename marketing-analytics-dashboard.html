@@ -106,10 +106,22 @@ select{border:1px solid var(--color-border-input);border-radius:var(--radius-md)
 .pr-lockedline{color:var(--color-fg-secondary);margin-bottom:var(--space-3)}
 
 .pr-chartcard{border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4)}
-.pr-charttitle{margin-bottom:var(--space-3)}
+.pr-charttitle{margin-bottom:var(--space-2)}
 .pr-chart-wrap{position:relative;height:320px}
 .pr-tip{color:var(--color-fg-tertiary);margin:var(--space-3) 2px 0}
 .pr-tip b{color:var(--color-fg-secondary)}
+
+.pr-metricinfo{background:var(--color-bg-subtle);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:var(--space-3)}
+.pr-metricinfo .def{color:var(--color-fg-secondary)}
+.pr-metricinfo .def b{color:var(--color-fg);font-weight:650}
+.pr-metricinfo .formula{color:var(--color-fg-tertiary)}
+.pr-metricinfo .statrow{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;margin-top:6px}
+.pr-metricinfo .current{color:var(--color-fg);font-weight:650}
+.pr-metricinfo .target{color:var(--color-fg-secondary)}
+.pr-status{display:inline-flex;align-items:center;gap:5px;border-radius:var(--radius-full);padding:2px 10px;font-weight:650}
+.pr-status.good{background:#e9f7f1;color:var(--success-500)}
+.pr-status.bad{background:var(--error-100);color:var(--error-600)}
+.pr-status .dot{width:6px;height:6px;border-radius:99px;background:currentColor}
 
 .pr-error{border:1px solid var(--error-100);background:var(--error-100);border-radius:var(--radius-lg);
   padding:var(--space-4);color:var(--error-600)}
@@ -130,7 +142,9 @@ select:focus-visible, button:focus-visible, textarea:focus-visible{
       <div class="t-body2">A view-only plugin — it only ever renders <span class="t-mono">inputs.dataset</span>, nothing
         is bundled inside it and nothing gets submitted back. Pick a fixture to load its full JSON into the editable
         box below, edit anything, and click Launch. Data is always plotted one point per entry in
-        <span class="t-mono">dataset.weeks</span> — there's no daily view to generate, just the weeks you provide.</div>
+        <span class="t-mono">dataset.weeks</span>. Above each chart, <span class="t-mono">inputs.metrics</span> can
+        override a metric's definition/formula and attach a target (e.g. "CAC ≤ $35") — shown as a badge and a
+        dashed reference line on the chart itself.</div>
     </div>
     <span class="host-tag t-body2">1 HTML file, no filetree</span>
   </div>
@@ -188,30 +202,58 @@ const MANIFEST = {
   // This plugin is view-only: it never returns learner state, so there is
   // no submissionSchema and resumable is false — mount() always returns
   // the same view for the same inputs, nothing to save or restore.
-  inputSchemaTopLevelKeys: ["dataset","view","readOnly"],
+  inputSchemaTopLevelKeys: ["dataset","view","readOnly","metrics"],
   viewKeys: ["mode","lockedView","allowedMetrics","allowedBreakdowns","initialView","showOverview"]
 };
 
 const BASE_FIELDS = ["impressions","clicks","spend","leads","conversions","revenue"];
 
+// Every metric ships with a built-in plain-language definition and formula —
+// this is reference copy about how the metric works in general, not campaign
+// data, so it's fine for it to live in the plugin (same as the metric's
+// label always has). A tutor can override either string, or add a target,
+// via inputs.metrics — see mergeMetricInfo() below.
 const METRICS = [
-  {key:"spend", label:"Spend ($)", fmt:"$"},
-  {key:"impressions", label:"Impressions", fmt:"n"},
-  {key:"clicks", label:"Clicks", fmt:"n"},
-  {key:"ctr", label:"CTR (%)", fmt:"%"},
-  {key:"cpc", label:"CPC ($)", fmt:"$"},
-  {key:"leads", label:"Leads", fmt:"n"},
-  {key:"cpl", label:"CPL ($)", fmt:"$"},
-  {key:"conversions", label:"Conversions", fmt:"n"},
-  {key:"cvr", label:"Conversion rate (%)", fmt:"%"},
-  {key:"cac", label:"CAC ($)", fmt:"$"},
-  {key:"revenue", label:"Revenue ($)", fmt:"$"},
-  {key:"roas", label:"ROAS (×)", fmt:"x"},
-  {key:"roi", label:"ROI (%)", fmt:"%"},
-  {key:"clv", label:"CLV ($)", fmt:"$"}
+  {key:"spend", label:"Spend ($)", fmt:"$", definition:"Total media spend.", formula:"Sum of spend"},
+  {key:"impressions", label:"Impressions", fmt:"n", definition:"How many times an ad was shown.", formula:"Sum of impressions"},
+  {key:"clicks", label:"Clicks", fmt:"n", definition:"How many times someone clicked an ad.", formula:"Sum of clicks"},
+  {key:"ctr", label:"CTR (%)", fmt:"%", definition:"Share of impressions that led to a click.", formula:"Clicks ÷ Impressions"},
+  {key:"cpc", label:"CPC ($)", fmt:"$", definition:"Average price paid per click.", formula:"Spend ÷ Clicks"},
+  {key:"leads", label:"Leads", fmt:"n", definition:"People who showed interest (e.g. a form fill).", formula:"Sum of leads"},
+  {key:"cpl", label:"CPL ($)", fmt:"$", definition:"Average cost to generate one lead.", formula:"Spend ÷ Leads"},
+  {key:"conversions", label:"Conversions", fmt:"n", definition:"Completed purchases or signed customers.", formula:"Sum of conversions"},
+  {key:"cvr", label:"Conversion rate (%)", fmt:"%", definition:"Share of clicks that became a conversion.", formula:"Conversions ÷ Clicks"},
+  {key:"cac", label:"CAC ($)", fmt:"$", definition:"Cost to acquire one paying customer.", formula:"Spend ÷ Conversions"},
+  {key:"revenue", label:"Revenue ($)", fmt:"$", definition:"Total revenue generated.", formula:"Sum of revenue"},
+  {key:"roas", label:"ROAS (×)", fmt:"x", definition:"Revenue earned per dollar spent.", formula:"Revenue ÷ Spend"},
+  {key:"roi", label:"ROI (%)", fmt:"%", definition:"Profit relative to spend, after margin.", formula:"(Revenue × Margin − Spend) ÷ Spend"},
+  {key:"clv", label:"CLV ($)", fmt:"$", definition:"Projected lifetime value of a customer.", formula:"(Revenue ÷ Conversions) × LTV multiplier"}
 ];
 const CHARTTYPES = ["Line","Bar"];
 const PALETTE = ["#2f5bea","#0f8a5f","#d6336c","#b45309","#7c3aed","#0e7490"];
+const COMPARATORS = { "<=":"≤", ">=":"≥", "<":"<", ">":">", "=":"=" };
+
+// Merge a metric's built-in copy with any tutor override from inputs.metrics.
+function mergeMetricInfo(metric, override){
+  const o = override || {};
+  return {
+    key: metric.key, label: metric.label, fmt: metric.fmt,
+    definition: o.definition || metric.definition,
+    formula: o.formula || metric.formula,
+    target: o.target || null
+  };
+}
+function evaluateTarget(value, target){
+  if (value===null || value===undefined || !target || typeof target.value!=="number") return null;
+  switch(target.comparator){
+    case "<=": return value<=target.value;
+    case ">=": return value>=target.value;
+    case "<": return value<target.value;
+    case ">": return value>target.value;
+    case "=": return Math.abs(value-target.value) < Math.max(1e-9, Math.abs(target.value)*0.005);
+    default: return null;
+  }
+}
 
 function computeValue(b, camp, key){
   const {impressions,clicks,spend,leads,conversions,revenue} = b;
@@ -247,6 +289,20 @@ function getChartData(camp, breakdownKey, metricKey){
     return { label:name, data, color: PALETTE[i % PALETTE.length] };
   });
   return { labels, datasets };
+}
+// Aggregate value for a metric across every entity and every week of a
+// breakdown — this is what the info panel shows as "Current" and what a
+// target is compared against, independent of which single line you're
+// looking at on the chart.
+function aggregateValue(camp, breakdownKey, metricKey){
+  const dim = camp.dimensions[breakdownKey];
+  const totals = {};
+  BASE_FIELDS.forEach(f=> totals[f]=0);
+  Object.keys(dim.entities).forEach(name=>{
+    const s = dim.entities[name];
+    BASE_FIELDS.forEach(f=>{ (s[f]||[]).forEach(v=>{ if (typeof v==="number") totals[f]+=v; }); });
+  });
+  return computeValue(totals, camp, metricKey);
 }
 function fmtVal(v, type){
   if (v===null || v===undefined || Number.isNaN(v)) return "—";
@@ -349,10 +405,30 @@ function validateInputs(rawInputs){
     }
   }
 
+  // inputs.metrics lets a tutor override a metric's definition/formula
+  // and/or attach a target ("CAC ≤ $35"). Anything not overridden falls
+  // back to the plugin's built-in copy for that metric.
+  const metricOverrides = {};
+  Object.keys(inputs.metrics||{}).forEach(key=>{
+    const m = METRICS.find(mm=>mm.key===key);
+    if (!m){ errors.push('metrics.'+key+' is not a known metric key.'); return; }
+    const o = inputs.metrics[key] || {};
+    const clean = {};
+    if (o.definition!==undefined) clean.definition = String(o.definition);
+    if (o.formula!==undefined) clean.formula = String(o.formula);
+    if (o.target!==undefined){
+      if (!o.target || !COMPARATORS[o.target.comparator] || typeof o.target.value!=="number" || !isFinite(o.target.value)){
+        errors.push('metrics.'+key+'.target must be {comparator: one of <= >= < > =, value: number}.');
+      } else clean.target = { comparator:o.target.comparator, value:o.target.value };
+    }
+    metricOverrides[key] = clean;
+  });
+
   return {
     ok: errors.length===0, errors,
     dataset: camp, view, availableBreakdowns,
-    readOnly: !!inputs.readOnly
+    readOnly: !!inputs.readOnly,
+    metricOverrides
   };
 }
 
@@ -408,6 +484,7 @@ function mount(container, inputs, callbacks){
           '<div class="pr-field"><label class="t-label" for="prChart">Chart</label><select id="prChart" class="pr-select"></select></div>' +
         '</div></div>') +
     '<div class="pr-chartcard"><div class="pr-charttitle t-body1-semi js-title"></div>' +
+      '<div class="pr-metricinfo t-body2 js-metricinfo"></div>' +
       '<div class="pr-chart-wrap" role="img" aria-label="" id="prChartAria"><canvas id="prCanvas"></canvas></div></div>' +
     '<div class="pr-tip t-body2 js-tip"></div>' +
   '</div>';
@@ -437,14 +514,22 @@ function mount(container, inputs, callbacks){
     selChart.onchange = e=>{ state.chartType=e.target.value; renderChart(); };
   }
 
-  function chartConfig(data, metric, chartType, compact){
+  function chartConfig(data, metric, chartType, compact, target){
     const type = chartType==="Bar" ? "bar" : "line";
-    return { type, data:{ labels:data.labels, datasets:data.datasets.map(ds=>({
+    const datasets = data.datasets.map(ds=>({
         label:ds.label, data:ds.data, borderColor:ds.color,
         backgroundColor: type==="bar" ? ds.color : "transparent",
         borderWidth:2, tension:.3, pointRadius: type==="bar"?0:3, pointHoverRadius:4, spanGaps:false,
-        borderRadius: type==="bar" ? 4 : 0, maxBarThickness:34
-      })) },
+        borderRadius: type==="bar" ? 4 : 0, maxBarThickness:34, order:1
+      }));
+    if (target){
+      datasets.push({
+        type:"line", label:"Target ("+COMPARATORS[target.comparator]+" "+fmtVal(target.value, metric.fmt)+")",
+        data: data.labels.map(()=>target.value), borderColor:"#b45309", borderDash:[6,4], borderWidth:1.5,
+        pointRadius:0, fill:false, order:0, tension:0
+      });
+    }
+    return { type, data:{ labels:data.labels, datasets },
       options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:"index",intersect:false},
         plugins:{ legend:{ display:true, position:"bottom", labels:{usePointStyle:true,pointStyle:"line",boxWidth:22,font:{size:compact?10:12}} },
           tooltip:{ callbacks:{ label:(ctx)=>" "+ctx.dataset.label+": "+fmtVal(ctx.raw, metric.fmt) } } },
@@ -452,13 +537,25 @@ function mount(container, inputs, callbacks){
           x:{ ticks:{autoSkip:true,maxRotation:0,font:{size:compact?9:11}}, grid:{display:false} } } } };
   }
   function renderChart(){
-    const metric = METRICS.find(m=>m.key===state.metric);
+    const metric = mergeMetricInfo(METRICS.find(m=>m.key===state.metric), built.metricOverrides[state.metric]);
     const breakdown = breakdownPool.find(b=>b.key===state.breakdown) || built.availableBreakdowns.find(b=>b.key===state.breakdown);
     root.querySelector(".js-title").textContent = metric.label+" — by "+breakdown.label.toLowerCase();
     root.querySelector("#prChartAria").setAttribute("aria-label", metric.label+" by "+breakdown.label+" chart");
+
+    const current = aggregateValue(camp, state.breakdown, state.metric);
+    const meets = evaluateTarget(current, metric.target);
+    let statusHtml = "";
+    if (metric.target){
+      statusHtml = '<span class="target">Target: '+COMPARATORS[metric.target.comparator]+' '+fmtVal(metric.target.value, metric.fmt)+'</span>' +
+        (meets!==null ? '<span class="pr-status '+(meets?"good":"bad")+'"><span class="dot"></span>'+(meets?"On target":"Off target")+'</span>' : "");
+    }
+    root.querySelector(".js-metricinfo").innerHTML =
+      '<div class="def"><b>'+metric.label+'</b> — '+metric.definition+' <span class="formula">Formula: '+metric.formula+'</span></div>' +
+      '<div class="statrow"><span class="current">Current: '+fmtVal(current, metric.fmt)+'</span>'+statusHtml+'</div>';
+
     const data = getChartData(camp, state.breakdown, state.metric);
     if (mainChart){ mainChart.destroy(); mainChart=null; }
-    mainChart = new Chart(root.querySelector("#prCanvas").getContext("2d"), chartConfig(data, metric, state.chartType, false));
+    mainChart = new Chart(root.querySelector("#prCanvas").getContext("2d"), chartConfig(data, metric, state.chartType, false, metric.target));
     root.querySelector(".js-tip").innerHTML = '<b>Tip:</b> ratio metrics (CTR, CPC, CPL, conversion rate, CAC, ROAS, ROI) are computed from each week\'s own raw counts. A gap in a line means that week\'s denominator was zero (e.g. no conversions, so CAC is undefined).';
   }
 
@@ -538,28 +635,35 @@ const FIXTURES = [
   },
   {
     id:"explorer", name:"2 · Full explorer — DTC skincare launch",
-    desc:'mode:"explorer" — every metric, breakdown and chart type is open. The dataset below is the entire data source, nothing is bundled.',
+    desc:'mode:"explorer" — every metric, breakdown and chart type is open. Targets are set on CAC and ROAS via inputs.metrics; try switching to either metric to see the target line and status badge.',
     inputs: { dataset: SAMPLE_DTC_DATASET, view:{ mode:"explorer", showOverview:true,
-      initialView:{ metric:"spend", breakdown:"channel", chartType:"Line" } } }
+      initialView:{ metric:"cac", breakdown:"channel", chartType:"Line" } },
+      metrics: {
+        cac: { target:{ comparator:"<=", value:35 } },
+        roas: { target:{ comparator:">=", value:3.0 } }
+      } }
   },
   {
     id:"single", name:"3 · Single locked view — SaaS CAC by channel",
-    desc:'mode:"single" — no controls at all, launched straight into one fixed chart. "Launch it with only one view."',
+    desc:'mode:"single" — no controls at all, launched straight into one fixed chart, with a CAC target from the overview text made literal via inputs.metrics.',
     inputs: { dataset: SAMPLE_SAAS_DATASET, view:{ mode:"single", showOverview:false,
-      lockedView:{ metric:"cac", breakdown:"channel", chartType:"Line" } } }
+      lockedView:{ metric:"cac", breakdown:"channel", chartType:"Line" } },
+      metrics: { cac: { target:{ comparator:"<=", value:2800 } } } }
   },
   {
     id:"guided", name:"4 · Guided comparison — Field & Forge",
-    desc:'mode:"guided" restricts choices to Spend/ROAS/CAC × Persona/Market on a completely different, smaller dataset.',
+    desc:'mode:"guided" restricts choices to Spend/ROAS/CAC × Persona/Market, and overrides ROAS\'s plain-language definition to match this brand\'s voice, plus its target.',
     inputs: { dataset: SAMPLE_FIELDFORGE_DATASET, view:{ mode:"guided",
       allowedMetrics:["spend","roas","cac"], allowedBreakdowns:["persona","market"],
-      initialView:{ metric:"roas", breakdown:"persona", chartType:"Bar" } } }
+      initialView:{ metric:"roas", breakdown:"persona", chartType:"Bar" } },
+      metrics: { roas: { definition:"Revenue back for every dollar spent on this winback push.", target:{ comparator:">=", value:2.5 } } } }
   },
   {
     id:"readonly", name:"5 · Read-only view",
     desc:"readOnly:true — the controls render so the viewer can see what's selected, but every select is disabled. Useful for a locked reference view.",
     inputs: { dataset: SAMPLE_DTC_DATASET, readOnly:true, view:{ mode:"explorer",
-      initialView:{ metric:"roi", breakdown:"market", chartType:"Bar" } } }
+      initialView:{ metric:"roi", breakdown:"market", chartType:"Bar" } },
+      metrics: { roi: { target:{ comparator:">=", value:0 } } } }
   },
   {
     id:"invalid", name:"6 · Invalid input (error state demo)",
@@ -569,8 +673,8 @@ const FIXTURES = [
   },
   {
     id:"template", name:"7 · Blank dataset — start from scratch",
-    desc:"The smallest possible valid dataset: one dimension, two entities, three weeks. Every number here is exactly "+
-      "what gets plotted — no hidden math, no lookups, no generation. Edit freely and click Launch.",
+    desc:"The smallest possible valid dataset: one dimension, two entities, three weeks, plus one metric override showing "+
+      "the pattern for a custom definition and target. Every number here is exactly what gets plotted. Edit freely and click Launch.",
     inputs: {
       dataset: {
         title:"My Campaign", sub:"Describe the campaign here",
@@ -587,7 +691,10 @@ const FIXTURES = [
           }}
         }
       },
-      view:{ mode:"explorer" }
+      view:{ mode:"explorer" },
+      metrics: {
+        cac: { definition:"What we can afford to pay for one customer on this campaign.", target:{ comparator:"<=", value:65 } }
+      }
     }
   }
 ];

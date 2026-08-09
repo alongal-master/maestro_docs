@@ -11,8 +11,8 @@
   :root {
     --bg: #f4f1ec;
     --surface: #ffffff;
-    --tutor-bg: #ffffff;
-    --tutor-border: #e2ddd5;
+    --maestro-bg: #ffffff;
+    --maestro-border: #e2ddd5;
     --student-bg: #1a1a2e;
     --student-text: #f0ede8;
     --accent: #c9653a;
@@ -30,6 +30,7 @@
     --radius: 16px;
     --radius-sm: 10px;
     --shadow-sm: 0 1px 3px rgba(26,26,46,0.06);
+    --maestro-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='12 12 42.13 48'%3E%3Cpath fill='%23000' d='M33.0674 12C33.9785 12.0177 34.8883 12.2319 35.7285 12.6387L51.7266 20.8623C53.1836 21.4691 54.1318 22.8918 54.1318 24.4678V36.0732C54.1318 41.5444 51.9108 47.0497 48.1846 50.4814C48.1846 50.4814 38.3566 59.9992 33.0664 60C27.7869 60 17.9862 50.5191 17.9473 50.4814C14.2209 47.0497 12 41.5463 12 36.0732V24.4678C12 22.8917 12.9481 21.4709 14.4053 20.8623L30.4062 12.6387C31.2464 12.2319 32.1546 12.0177 33.0674 12ZM30.5059 41.9219C30.2242 41.922 29.9953 42.1514 29.9951 42.4307V47.54C29.9953 47.8211 30.2242 48.0487 30.5059 48.0488H35.626C35.9076 48.0486 36.1365 47.8193 36.1367 47.54V42.4307C36.1365 42.1497 35.9076 41.9221 35.626 41.9219H30.5059ZM36.5508 35.9023C36.2692 35.9026 36.0411 36.1319 36.041 36.4111V41.5205C36.0413 41.8014 36.2693 42.029 36.5508 42.0293H41.6709C41.9525 42.0292 42.1814 41.7997 42.1816 41.5205V36.4111C42.1815 36.13 41.9526 35.9025 41.6709 35.9023H36.5508ZM24.4736 35.9004C24.1919 35.9004 23.9631 36.1299 23.9629 36.4092V41.5186C23.963 41.7997 24.1919 42.0273 24.4736 42.0273H29.5928C29.8744 42.0272 30.1034 41.7978 30.1035 41.5186V36.4092C30.1033 36.1282 29.8744 35.9005 29.5928 35.9004H24.4736ZM30.5059 29.8926C30.2241 29.8927 29.9951 30.1229 29.9951 30.4023V35.5107C29.9951 35.792 30.2241 36.0204 30.5059 36.0205H35.626C35.9077 36.0203 36.1367 35.7901 36.1367 35.5107V30.4023C36.1367 30.1212 35.9077 29.8928 35.626 29.8926H30.5059ZM42.5469 29.8926C42.265 29.8926 42.0361 30.1229 42.0361 30.4023V35.5107C42.0361 35.792 42.265 36.0205 42.5469 36.0205H47.667C47.9486 36.0202 48.1777 35.7901 48.1777 35.5107V30.4023C48.1777 30.1213 47.9486 29.8929 47.667 29.8926H42.5469ZM18.4775 29.8906C18.1957 29.8906 17.9669 30.121 17.9668 30.4004V35.5088C17.9668 35.79 18.1957 36.0185 18.4775 36.0186H23.5977C23.8793 36.0183 24.1084 35.7881 24.1084 35.5088V30.4004C24.1083 30.1193 23.8793 29.8909 23.5977 29.8906H18.4775ZM24.4746 23.8887C24.1929 23.8889 23.9649 24.1191 23.9648 24.3984V29.5068C23.9648 29.788 24.1929 30.0164 24.4746 30.0166H29.5947C29.8765 30.0165 30.1055 29.7863 30.1055 29.5068V24.3984C30.1054 24.1173 29.8765 23.8888 29.5947 23.8887H24.4746ZM36.5527 23.8887C36.271 23.8888 36.042 24.1191 36.042 24.3984V29.5068C36.042 29.788 36.271 30.0164 36.5527 30.0166H41.6729C41.9546 30.0165 42.1836 29.7863 42.1836 29.5068V24.3984C42.1836 24.1173 41.9546 23.8888 41.6729 23.8887H36.5527Z'/%3E%3C/svg%3E");
   }
 
   body {
@@ -54,7 +55,7 @@
     background: var(--surface);
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
-    border: 1px solid var(--tutor-border);
+    border: 1px solid var(--maestro-border);
   }
   .header .course-badge {
     display: inline-block;
@@ -88,7 +89,7 @@
     font-weight: 500;
     color: var(--text-secondary);
     background: var(--bg);
-    border: 1px solid var(--tutor-border);
+    border: 1px solid var(--maestro-border);
     padding: 5px 14px;
     border-radius: 20px;
   }
@@ -138,23 +139,31 @@
 
   /* ── Message row ── */
   .msg-row { display: flex; gap: 12px; max-width: 88%; animation: fadeSlideIn 0.3s ease both; }
-  .msg-row.tutor { align-self: flex-start; }
+  .msg-row.maestro { align-self: flex-start; }
   .msg-row.student { align-self: flex-end; flex-direction: row-reverse; }
   @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
   /* ── Avatar ── */
   .avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; margin-top: 2px; }
-  .tutor .avatar { background: linear-gradient(135deg, var(--accent), #e07a4f); color: #fff; }
+  .maestro .avatar { background: linear-gradient(135deg, var(--accent), #e07a4f); color: #fff; }
+  .maestro .avatar::before {
+    content: '';
+    width: 21px;
+    height: 21px;
+    background: #fff;
+    -webkit-mask: var(--maestro-mark) center / contain no-repeat;
+    mask: var(--maestro-mark) center / contain no-repeat;
+  }
   .student .avatar { background: var(--student-bg); color: var(--student-text); }
 
   /* ── Bubble ── */
   .bubble { padding: 14px 18px; border-radius: var(--radius); font-size: 14.5px; line-height: 1.65; box-shadow: var(--shadow-sm); }
-  .tutor .bubble { background: var(--tutor-bg); border: 1px solid var(--tutor-border); border-top-left-radius: 4px; color: var(--text-primary); }
+  .maestro .bubble { background: var(--maestro-bg); border: 1px solid var(--maestro-border); border-top-left-radius: 4px; color: var(--text-primary); }
   .student .bubble { background: var(--student-bg); border: 1px solid transparent; border-top-right-radius: 4px; color: var(--student-text); }
 
   /* ── Sender label ── */
   .sender-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
-  .tutor .sender-label { color: var(--accent); }
+  .maestro .sender-label { color: var(--accent); }
   .student .sender-label { color: rgba(240,237,232,0.55); }
 
   /* ── Typography inside bubbles ── */
@@ -225,14 +234,14 @@
   
 
   <div class="chat">
-    <div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Hi there! Let me get your next lesson ready — this should just take a moment.</p></div></div>
+    <div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>Hi there! Let me get your next lesson ready — this should just take a moment.</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Welcome to BE101 — Web Fundamentals! 🎯</p>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>Welcome to BE101 — Web Fundamentals! 🎯</p>
 <p>Before we get into the course — what do you think happens behind the scenes when you open a website? Like, what actually makes it work?</p></div></div>
 
 <div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>The browser sends an API request to the server and receives back a promise, followed by fulfillment of that promise</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Nice — you're already thinking in terms of requests and Promises, which tells me FE101 stuck with you. You've got the right instinct: there's a conversation happening between the browser and a server.</p>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>Nice — you're already thinking in terms of requests and Promises, which tells me FE101 stuck with you. You've got the right instinct: there's a conversation happening between the browser and a server.</p>
 <p>But that's just one layer. When you type a URL and hit enter, there's also the question of <em>how the browser finds the server in the first place</em>, what format the response comes back in, and how that raw data becomes the page you actually see. That whole journey — from keystroke to rendered pixels — is what this course unpacks.</p>
 <p>Here's the big picture: nearly every software product you'll ever work on lives on the web. Whether you end up building backends, frontends, APIs, or AI-powered applications — it all runs through web infrastructure. Understanding how the web works isn't a specialty. It's the foundation everything else sits on.</p>
 <p>You've already written code in Python and JavaScript in previous courses. But that code ran locally — on your machine, in a terminal. In this course, your code starts running in a browser, reaching real servers, and being visible to anyone with a URL. That's a big jump.</p>
@@ -240,7 +249,7 @@
 
 <div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>Can you give examples?</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Sure! Here are a few directions this degree can take you:</p>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>Sure! Here are a few directions this degree can take you:</p>
 <ul>
 <li><strong>Frontend developer</strong> — you build what users see and interact with: layouts, buttons, forms, animations. Think of the Netflix interface or a dashboard — that's frontend work.</li>
 <li><strong>Backend developer</strong> — you build the APIs and services that frontend apps talk to. You'd handle data, authentication, business logic — the engine behind the scenes.</li>
@@ -252,14 +261,14 @@
 
 <div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>What do you mean by shipping models through web interfaces?</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Great question. Think about ChatGPT — there's a powerful AI model running on a server somewhere, but you interact with it through a web page. You type in a box, hit send, and text appears on screen.</p>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>Great question. Think about ChatGPT — there's a powerful AI model running on a server somewhere, but you interact with it through a web page. You type in a box, hit send, and text appears on screen.</p>
 <p>"Shipping a model through a web interface" means building that bridge — the web page that collects user input, sends it to the model on the server, and displays the response. The model is the brain; the web interface is how people actually reach it.</p>
 <p>Without the web layer, an AI model is just code running on a machine that nobody can talk to.</p>
 <p>Does that make it clearer? And back to my question — any of those directions sound like where you'd want to head?</p></div></div>
 
 <div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>AI Software Engineer</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>That's a great path. And here's the thing — as an AI software engineer, you won't just be training models. You'll be building the web interfaces that let people use them. Search bars, chat windows, recommendation panels, form-driven tools — all of that is web development. This course gives you the foundation to ship AI to real users.</p>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>That's a great path. And here's the thing — as an AI software engineer, you won't just be training models. You'll be building the web interfaces that let people use them. Search bars, chat windows, recommendation panels, form-driven tools — all of that is web development. This course gives you the foundation to ship AI to real users.</p>
 <p>By the end of BE101, you'll have built a real website — styled, interactive, pulling live data from an API — and you'll understand every layer of how it reaches someone's screen. That's directly relevant to what you want to do.</p>
 <p>Let me walk you through how the course is structured. It's built around <strong>four units</strong>:</p>
 <p><strong>Unit 1 — How the web works:</strong> We start with the invisible stuff — what actually happens when you type a URL and hit enter. You'll learn how browsers find servers (DNS), how they communicate (HTTP), what URLs really mean, and how data moves as JSON. By the end, you'll be able to trace the complete journey of a web request from start to finish.</p>
@@ -270,18 +279,18 @@
 
 <div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>What is the DOM?</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Good question — the DOM is exactly the kind of thing we'll dig into in <strong>Unit 3</strong>. I don't want to gloss over it with a shallow answer, but I also don't want to jump ahead and steal the thunder of that unit.</p>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>Good question — the DOM is exactly the kind of thing we'll dig into in <strong>Unit 3</strong>. I don't want to gloss over it with a shallow answer, but I also don't want to jump ahead and steal the thunder of that unit.</p>
 <p>For now, think of it as the live version of your web page that JavaScript can reach into and change — without reloading the page. That's the teaser. We'll get hands-on with it later.</p>
 <p>Anything else you're curious about, or shall we talk about the tools you'll be using in this course?</p></div></div>
 
 <div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>[system: user returned to lesson, welcome them back and remind them what you are teaching]</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Welcome back! We're in the BE101 orientation lesson — your introduction to Web Fundamentals. We've covered why the web matters for your AI engineering path and walked through all four units. You asked about the DOM, which we'll tackle in Unit 3.</p>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>Welcome back! We're in the BE101 orientation lesson — your introduction to Web Fundamentals. We've covered why the web matters for your AI engineering path and walked through all four units. You asked about the DOM, which we'll tackle in Unit 3.</p>
 <p>Next up: the tools you'll use in this course. Ready to dive in?</p></div></div>
 
 <div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>Yes, let's start</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>In this course, you'll build things for real — not in a simulated environment. You'll write code in a professional code editor and see your work come alive in an actual browser.</p>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>In this course, you'll build things for real — not in a simulated environment. You'll write code in a professional code editor and see your work come alive in an actual browser.</p>
 <p><strong>VS Code</strong> is the code editor you'll use throughout the course. It's the same tool professional web developers use every day. If you don't have it installed yet, don't worry — we'll set it up together in the next lesson.</p>
 <p><strong>The browser is your canvas.</strong> Unlike previous courses where you ran code in a terminal, here your output is a web page. You'll write an HTML file, save it, and open it in your browser to see it render. That instant feedback loop — write, save, refresh, see — is how web developers work.</p>
 <p><strong>DevTools</strong> is your browser's built-in developer tools. It lets you inspect any web page, see the HTML structure, debug CSS, and watch network requests in real time. It's like X-ray vision for the web — and you'll use it constantly throughout this course.</p>
@@ -290,7 +299,7 @@
 
 <div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>Yes, it makes sense</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>You're not starting from zero. Let's talk about what you're bringing into this course.</p>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>You're not starting from zero. Let's talk about what you're bringing into this course.</p>
 <p><strong>From FE101 (JavaScript &amp; TypeScript):</strong> You already know JavaScript — variables, functions, arrays, objects, async/await, and Promises. (You showed that earlier when you mentioned Promises unprompted!) In this course, you'll use that same JavaScript, but now it runs inside a browser instead of Node.js. The language is the same — the environment changes.</p>
 <p><strong>From CS101 and CS103:</strong> You know how to think about code structure, break problems down, and organize your work. That carries directly into organizing web projects across HTML, CSS, and JS files.</p>
 <p><strong>From PY101 and CS1020:</strong> You've built problem-solving habits and understand data structures. When you parse JSON from an API or loop through data to render it on a page, those skills kick in.</p>
@@ -299,13 +308,13 @@
 
 <div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>Is DevTools hard to learn?</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Not at all — and that's coming from someone who'll be using it hands-on within the next few lessons. DevTools is visual and exploratory by nature. You click on an element, you see its styles. You open the Network tab, you see requests happening in real time. It's more like clicking around an app than memorizing commands.</p>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>Not at all — and that's coming from someone who'll be using it hands-on within the next few lessons. DevTools is visual and exploratory by nature. You click on an element, you see its styles. You open the Network tab, you see requests happening in real time. It's more like clicking around an app than memorizing commands.</p>
 <p>You'll pick it up naturally as we go — one tab at a time, tied to whatever we're building.</p>
 <p>Ready to talk about grading and reviews?</p></div></div>
 
 <div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>Yes, let's continue</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Each unit ends with a <strong>review</strong> of the material covered in that unit. The final unit concludes with a comprehensive review of the full course.</p>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>Each unit ends with a <strong>review</strong> of the material covered in that unit. The final unit concludes with a comprehensive review of the full course.</p>
 <p>Here's how the grades break down:</p>
 <ul>
 <li><strong>Reviews 1–3</strong> are worth <strong>10% each</strong> (30% total). They're <strong>not timed</strong> and allow <strong>unlimited retakes</strong>.</li>
@@ -318,12 +327,12 @@
 
 <div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>no</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>That covers everything in this orientation. You've got the full picture — why the web matters for your AI engineering path, what each of the four units covers, the tools you'll use, and how grading works.</p>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>That covers everything in this orientation. You've got the full picture — why the web matters for your AI engineering path, what each of the four units covers, the tools you'll use, and how grading works.</p>
 <p>Any remaining questions before we wrap up, or anything you'd like to revisit?</p></div></div>
 
 <div class="msg-row student"><div class="avatar">👤</div><div class="bubble"><div class="sender-label">Student</div><p>No more questions for now</p></div></div>
 
-<div class="msg-row tutor"><div class="avatar">🤖</div><div class="bubble"><div class="sender-label">Tutor</div><p>Great orientation! 🎯 You now know the full course roadmap — from how the web works under the hood to building styled, interactive, data-driven pages. Your AI engineering goal gives everything we'll build a clear purpose. Next up is <strong>Clients and Servers</strong> — where we start tracing what actually happens when you type a URL. See you there!</p></div></div>
+<div class="msg-row maestro"><div class="avatar"></div><div class="bubble"><div class="sender-label">Maestro</div><p>Great orientation! 🎯 You now know the full course roadmap — from how the web works under the hood to building styled, interactive, data-driven pages. Your AI engineering goal gives everything we'll build a clear purpose. Next up is <strong>Clients and Servers</strong> — where we start tracing what actually happens when you type a URL. See you there!</p></div></div>
   </div>
 
 </div>

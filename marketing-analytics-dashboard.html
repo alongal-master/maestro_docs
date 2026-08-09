@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>marketing-analytics plugin — input playground</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+/* ==========================================================================
+   HOST-PROVIDED DESIGN TOKENS (illustrative values — see README from the
+   previous build for context; unchanged from the prior version)
+   ========================================================================== */
+:root{
+  --color-bg:#f4f6fa; --color-bg-subtle:#eceef2;
+  --color-surface:#ffffff; --color-surface-raised:#ffffff;
+  --color-fg:#111827; --color-fg-secondary:#5b6472; --color-fg-tertiary:#8a94a3; --color-fg-disabled:#b6bcc6;
+  --color-border:#e3e6ec; --color-border-strong:#c7cdd8; --color-border-input:#c7cdd8;
+  --success-500:#0f8a5f; --error-500:#c0392b; --warning-500:#b45309;
+  --error-100:#fbe7e5; --error-600:#a5301f;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px; --space-8:32px; --space-12:48px;
+  --radius-md:8px; --radius-lg:12px; --radius-xl:16px; --radius-full:9999px;
+  --shadow-sm: 0 1px 2px rgba(17,24,39,.06);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-bg);color:var(--color-fg);
+     font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;}
+
+.t-h3{font-size:20px;font-weight:700;letter-spacing:-.01em;margin:0}
+.t-h4{font-size:17px;font-weight:700;letter-spacing:-.01em;margin:0}
+.t-h5{font-size:14.5px;font-weight:650;margin:0}
+.t-body1{font-size:14px;font-weight:400}
+.t-body1-semi{font-size:14px;font-weight:650}
+.t-body2{font-size:12.5px;font-weight:400}
+.t-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.t-mono{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px}
+
+/* ---- host chrome ---- */
+.wrap{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
+.host-banner{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.host-banner .t-body2{color:var(--color-fg-secondary);max-width:660px}
+.host-tag{display:inline-block;background:var(--color-bg-subtle);color:var(--color-fg-secondary);
+  border-radius:var(--radius-full);padding:3px 10px;margin-left:var(--space-2)}
+
+.host-section{border:1px dashed var(--color-border-strong);border-radius:var(--radius-xl);
+  padding:var(--space-4);margin-top:var(--space-6);background:#fbfcfe}
+.host-section-label{display:flex;align-items:center;gap:var(--space-2);color:var(--color-fg-tertiary);margin-bottom:var(--space-3)}
+.host-section-label .dot{width:6px;height:6px;border-radius:99px;background:var(--color-fg-tertiary)}
+
+.fixture-row{display:flex;gap:var(--space-3);align-items:flex-end;flex-wrap:wrap}
+.field label{display:block;margin-bottom:6px;color:var(--color-fg-secondary)}
+select, button, textarea{font:inherit}
+select{border:1px solid var(--color-border-input);border-radius:var(--radius-md);padding:8px 10px;
+  background:var(--color-surface);color:var(--color-fg);min-width:300px}
+.btn{border:1px solid var(--color-border-strong);background:var(--color-surface);color:var(--color-fg);
+  border-radius:var(--radius-full);padding:9px 16px;cursor:pointer}
+.btn:hover{background:var(--color-bg-subtle)}
+.btn-primary{background:var(--color-fg);color:#fff;border-color:var(--color-fg)}
+.btn-primary:hover{opacity:.88}
+.fixture-desc{color:var(--color-fg-secondary);margin-top:var(--space-2);max-width:760px}
+
+.json-box{margin-top:var(--space-4);background:var(--color-fg);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);
+  color:#d7e0f5;max-height:400px;overflow:auto}
+.json-box .t-label{color:#93a3c9;display:block;margin-bottom:6px}
+.json-editor{width:100%;min-height:250px;resize:vertical;background:transparent;color:#d7e0f5;
+  border:1px solid #3a4562;border-radius:var(--radius-md);padding:8px;font-family:"SF Mono",Menlo,Consolas,monospace;
+  font-size:12px;line-height:1.5}
+.json-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:var(--space-3)}
+.json-error{color:#ff9b8a}
+.json-hint{color:#93a3c9}
+
+.callback-log{margin-top:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-lg);
+  background:var(--color-surface);max-height:150px;overflow:auto}
+.callback-log .row{display:flex;gap:var(--space-2);padding:7px 12px;border-bottom:1px solid var(--color-border)}
+.callback-log .row:last-child{border-bottom:none}
+.callback-log .tag{color:var(--color-fg-tertiary);white-space:nowrap}
+.callback-log .msg{color:var(--color-fg-secondary);word-break:break-word}
+.callback-log .row.err .tag{color:var(--error-600)}
+
+.panel-frame{border:1px solid var(--color-border-strong);border-radius:var(--radius-xl);
+  background:var(--color-surface);margin-top:var(--space-3);box-shadow:var(--shadow-sm)}
+.panel-frame-head{display:flex;justify-content:space-between;align-items:center;
+  padding:var(--space-2) var(--space-4);border-bottom:1px solid var(--color-border);color:var(--color-fg-tertiary)}
+
+/* ---- plugin UI (.pr-root) — tokens only, never a raw hex ---- */
+.pr-root{padding:var(--space-4);background:var(--color-surface)}
+.pr-root.pr-readonly{background:var(--color-bg-subtle)}
+
+.pr-header{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-3)}
+.pr-sub{color:var(--color-fg-secondary);margin-top:2px}
+.pr-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.pr-badge{display:inline-block;border-radius:var(--radius-full);padding:2px 9px;background:var(--color-bg-subtle);color:var(--color-fg-secondary)}
+.pr-badge.locked{background:var(--error-100);color:var(--error-600)}
+
+.pr-overview{background:var(--color-bg-subtle);border-radius:var(--radius-md);padding:10px 14px;
+  color:var(--color-fg-secondary);margin-bottom:var(--space-3)}
+.pr-overview b{color:var(--color-fg);font-weight:650}
+.pr-overview .sep{color:var(--color-border-strong);margin:0 8px}
+
+.pr-controlbar{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--space-4);flex-wrap:wrap;
+  border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-3)}
+.pr-fields{display:flex;gap:var(--space-4);flex-wrap:wrap}
+.pr-field label{display:block;margin-bottom:6px;color:var(--color-fg-secondary)}
+.pr-select{border:1px solid var(--color-border-input);border-radius:var(--radius-md);padding:8px 10px;
+  background:var(--color-surface);color:var(--color-fg);min-width:170px}
+.pr-select:disabled{color:var(--color-fg-disabled);background:var(--color-bg-subtle)}
+.pr-lockedline{color:var(--color-fg-secondary);margin-bottom:var(--space-3)}
+
+.pr-chartcard{border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4)}
+.pr-charttitle{margin-bottom:var(--space-3)}
+.pr-chart-wrap{position:relative;height:320px}
+.pr-tip{color:var(--color-fg-tertiary);margin:var(--space-3) 2px 0}
+.pr-tip b{color:var(--color-fg-secondary)}
+
+.pr-error{border:1px solid var(--error-100);background:var(--error-100);border-radius:var(--radius-lg);
+  padding:var(--space-4);color:var(--error-600)}
+.pr-error ul{margin:var(--space-2) 0 0;padding-left:18px}
+
+.pr-root select:focus-visible, .pr-root button:focus-visible,
+select:focus-visible, button:focus-visible, textarea:focus-visible{
+  outline:2px solid var(--color-fg); outline-offset:2px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="host-banner">
+    <div>
+      <h1 class="t-h3">marketing-analytics plugin — input playground</h1>
+      <div class="t-body2">A view-only plugin — it only ever renders <span class="t-mono">inputs.dataset</span>, nothing
+        is bundled inside it and nothing gets submitted back. Pick a fixture to load its full JSON into the editable
+        box below, edit anything, and click Launch. Data is always plotted one point per entry in
+        <span class="t-mono">dataset.weeks</span> — there's no daily view to generate, just the weeks you provide.</div>
+    </div>
+    <span class="host-tag t-body2">1 HTML file, no filetree</span>
+  </div>
+
+  <div class="host-section">
+    <div class="host-section-label"><span class="dot"></span><span class="t-label">Host — choose an input fixture</span></div>
+    <div class="fixture-row">
+      <div class="field">
+        <label class="t-label" for="fixtureSelect">Fixture</label>
+        <select id="fixtureSelect"></select>
+      </div>
+      <button class="btn btn-primary" id="btnLaunch">Launch</button>
+    </div>
+    <div class="fixture-desc t-body2" id="fixtureDesc"></div>
+
+    <div class="json-box">
+      <span class="t-label">inputs.dataset lives here — this literally is all the data</span>
+      <textarea id="jsonInputs" class="json-editor" spellcheck="false" aria-label="Plugin inputs JSON, editable"></textarea>
+      <div class="json-actions">
+        <span class="t-body2 json-hint" id="jsonHint">Selecting a fixture loads its JSON here — edit it, then click Launch.</span>
+        <button class="btn" id="btnLaunchJson">Launch this JSON</button>
+      </div>
+      <div class="t-body2 json-error" id="jsonError"></div>
+    </div>
+
+    <div class="callback-log" id="callbackLog"></div>
+  </div>
+
+  <div class="host-section" style="margin-top:var(--space-4)">
+    <div class="host-section-label"><span class="dot"></span><span class="t-label">Plugin surface — side panel</span></div>
+    <div class="panel-frame">
+      <div class="panel-frame-head">
+        <span class="t-body2">marketing-analytics · v1</span>
+        <span class="t-body2">rendered by mount(container, inputs, callbacks)</span>
+      </div>
+      <div id="pluginHost"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ======================================================================
+   MANIFEST (informal — stands in for src/manifest.json)
+   ====================================================================== */
+const MANIFEST = {
+  id: "marketing-analytics",
+  version: "0.2.0",
+  displayName: "Marketing analytics dashboard",
+  icon: "bar-chart",
+  capabilities: { network: false, resumable: false },
+  // Honest punt: this standalone demo loads Chart.js from a CDN for
+  // convenience. A real v1 bundle would vendor the chart library inside the
+  // single ES module so capabilities.network can truthfully stay false.
+  // This plugin is view-only: it never returns learner state, so there is
+  // no submissionSchema and resumable is false — mount() always returns
+  // the same view for the same inputs, nothing to save or restore.
+  inputSchemaTopLevelKeys: ["dataset","view","readOnly"],
+  viewKeys: ["mode","lockedView","allowedMetrics","allowedBreakdowns","initialView","showOverview"]
+};
+
+const BASE_FIELDS = ["impressions","clicks","spend","leads","conversions","revenue"];
+
+const METRICS = [
+  {key:"spend", label:"Spend ($)", fmt:"$"},
+  {key:"impressions", label:"Impressions", fmt:"n"},
+  {key:"clicks", label:"Clicks", fmt:"n"},
+  {key:"ctr", label:"CTR (%)", fmt:"%"},
+  {key:"cpc", label:"CPC ($)", fmt:"$"},
+  {key:"leads", label:"Leads", fmt:"n"},
+  {key:"cpl", label:"CPL ($)", fmt:"$"},
+  {key:"conversions", label:"Conversions", fmt:"n"},
+  {key:"cvr", label:"Conversion rate (%)", fmt:"%"},
+  {key:"cac", label:"CAC ($)", fmt:"$"},
+  {key:"revenue", label:"Revenue ($)", fmt:"$"},
+  {key:"roas", label:"ROAS (×)", fmt:"x"},
+  {key:"roi", label:"ROI (%)", fmt:"%"},
+  {key:"clv", label:"CLV ($)", fmt:"$"}
+];
+const CHARTTYPES = ["Line","Bar"];
+const PALETTE = ["#2f5bea","#0f8a5f","#d6336c","#b45309","#7c3aed","#0e7490"];
+
+function computeValue(b, camp, key){
+  const {impressions,clicks,spend,leads,conversions,revenue} = b;
+  switch(key){
+    case "spend": return spend;
+    case "impressions": return impressions;
+    case "clicks": return clicks;
+    case "ctr": return impressions>0 ? clicks/impressions*100 : null;
+    case "cpc": return clicks>0 ? spend/clicks : null;
+    case "leads": return leads;
+    case "cpl": return leads>0 ? spend/leads : null;
+    case "conversions": return conversions;
+    case "cvr": return clicks>0 ? conversions/clicks*100 : null;
+    case "cac": return conversions>0 ? spend/conversions : null;
+    case "revenue": return revenue;
+    case "roas": return spend>0 ? revenue/spend : null;
+    case "roi": return spend>0 ? (revenue*camp.margin - spend)/spend*100 : null;
+    case "clv": return conversions>0 ? (revenue/conversions)*camp.ltvMultiplier : null;
+    default: return null;
+  }
+}
+function getChartData(camp, breakdownKey, metricKey){
+  const dim = camp.dimensions[breakdownKey];
+  const labels = camp.weeks;
+  const names = Object.keys(dim.entities);
+  const datasets = names.map((name,i)=>{
+    const s = dim.entities[name];
+    const data = labels.map((_, wi)=>{
+      const b = {};
+      BASE_FIELDS.forEach(f => b[f] = (s[f] && typeof s[f][wi]==="number") ? s[f][wi] : 0);
+      return computeValue(b, camp, metricKey);
+    });
+    return { label:name, data, color: PALETTE[i % PALETTE.length] };
+  });
+  return { labels, datasets };
+}
+function fmtVal(v, type){
+  if (v===null || v===undefined || Number.isNaN(v)) return "—";
+  switch(type){
+    case "$": return "$"+Number(v).toLocaleString(undefined,{maximumFractionDigits:0});
+    case "%": return Number(v).toFixed(2)+"%";
+    case "x": return Number(v).toFixed(2)+"×";
+    case "n": return Number(v).toLocaleString();
+    default: return String(v);
+  }
+}
+
+/* ======================================================================
+   INPUT VALIDATION — this is the ONLY place data can come from besides
+   inputs.dataset itself: a tiny, obviously-fake placeholder used purely so
+   the empty-input state doesn't render a blank box. It has no real-looking
+   title, and mount() marks it with a visible "placeholder" badge.
+   ====================================================================== */
+const PLACEHOLDER_DATASET = {
+  title: "No dataset provided", sub: "Showing placeholder sample data",
+  overview: {}, margin:0.6, ltvMultiplier:2.0,
+  weeks: ["Week 1","Week 2","Week 3"],
+  dimensions: { sample: { label:"Sample", entities: {
+    "Sample A": { impressions:[10000,11000,10500], clicks:[150,165,158], spend:[500,520,510],
+      leads:[40,44,42], conversions:[8,9,8], revenue:[900,990,930] },
+    "Sample B": { impressions:[8000,8600,8300], clicks:[110,118,114], spend:[380,395,388],
+      leads:[28,30,29], conversions:[5,6,5], revenue:[600,660,630] }
+  }}}
+};
+
+function normalizeDataset(raw, errors){
+  const isPlaceholder = !raw;
+  if (!raw || typeof raw!=="object" || !raw.dimensions){
+    if (raw) errors.push('dataset is missing a "dimensions" object.');
+    return Object.assign({}, JSON.parse(JSON.stringify(PLACEHOLDER_DATASET)), { __placeholder: true });
+  }
+  const weeks = Array.isArray(raw.weeks) && raw.weeks.length>0 ? raw.weeks.slice() : null;
+  if (!weeks) errors.push('dataset.weeks must be a non-empty array of period labels.');
+  const weekCount = weeks ? weeks.length : 1;
+
+  const dimensions = {};
+  Object.keys(raw.dimensions||{}).forEach(dimKey=>{
+    const dim = raw.dimensions[dimKey];
+    if (!dim || typeof dim.entities!=="object" || Array.isArray(dim.entities) || Object.keys(dim.entities).length===0){
+      errors.push('dataset.dimensions.'+dimKey+' needs an "entities" object keyed by entity name.');
+      return;
+    }
+    const entities = {};
+    Object.keys(dim.entities).forEach(name=>{
+      const ent = dim.entities[name] || {};
+      const clean = {};
+      BASE_FIELDS.forEach(f=>{
+        const arr = ent[f];
+        if (!Array.isArray(arr) || arr.length!==weekCount || arr.some(v=>typeof v!=="number" || !isFinite(v) || v<0)){
+          errors.push('dataset.dimensions.'+dimKey+'.entities["'+name+'"].'+f+' must be a '+weekCount+'-number array (>= 0).');
+          clean[f] = new Array(weekCount).fill(0);
+        } else clean[f] = arr;
+      });
+      entities[name] = clean;
+    });
+    dimensions[dimKey] = { label: dim.label || dimKey, entities };
+  });
+
+  return {
+    title: raw.title || "Untitled campaign",
+    sub: raw.sub || "",
+    overview: raw.overview || {},
+    margin: typeof raw.margin==="number" ? raw.margin : 0.6,
+    ltvMultiplier: typeof raw.ltvMultiplier==="number" ? raw.ltvMultiplier : 2.0,
+    weeks: weeks || ["Week 1"],
+    dimensions,
+    __placeholder: false
+  };
+}
+function validateInputs(rawInputs){
+  const inputs = (rawInputs && typeof rawInputs==="object") ? rawInputs : {};
+  const errors = [];
+  Object.keys(inputs).forEach(k=>{ if (!MANIFEST.inputSchemaTopLevelKeys.includes(k)) errors.push('Unknown top-level input "'+k+'".'); });
+
+  const camp = normalizeDataset(inputs.dataset, errors);
+
+  const view = Object.assign({ mode:"explorer", showOverview:true }, inputs.view||{});
+  Object.keys(inputs.view||{}).forEach(k=>{ if (!MANIFEST.viewKeys.includes(k)) errors.push('Unknown view input "'+k+'".'); });
+  if (!["explorer","guided","single"].includes(view.mode)) errors.push('Invalid view.mode "'+view.mode+'".');
+
+  // Breakdown options are derived entirely from whatever dimensions the
+  // dataset itself defines — there is no fixed/known list of "channel",
+  // "persona", etc. baked into the plugin. Whatever keys and labels the
+  // input provides are what the learner gets to choose between.
+  const availableBreakdowns = Object.keys(camp.dimensions).map(key=>({ key, label: camp.dimensions[key].label || key }));
+  if (availableBreakdowns.length===0) errors.push("Dataset defines no usable breakdown dimensions.");
+
+  if (view.mode==="single"){
+    const lv = view.lockedView;
+    if (!lv) errors.push('view.mode "single" requires view.lockedView.');
+    else {
+      if (!METRICS.find(m=>m.key===lv.metric)) errors.push('lockedView.metric "'+lv.metric+'" is not a known metric.');
+      if (!availableBreakdowns.find(b=>b.key===lv.breakdown)) errors.push('lockedView.breakdown "'+lv.breakdown+'" is not available for this dataset.');
+      if (!CHARTTYPES.includes(lv.chartType)) errors.push('lockedView.chartType "'+lv.chartType+'" is not supported.');
+    }
+  }
+
+  return {
+    ok: errors.length===0, errors,
+    dataset: camp, view, availableBreakdowns,
+    readOnly: !!inputs.readOnly
+  };
+}
+
+/* ======================================================================
+   THE PLUGIN CONTRACT
+   export function mount(container, inputs, callbacks): { submit, unmount }
+   ====================================================================== */
+function mount(container, inputs, callbacks){
+  callbacks = callbacks || {};
+  const built = validateInputs(inputs);
+
+  if (!built.ok){
+    container.innerHTML =
+      '<div class="pr-root"><div class="pr-error">' +
+      '<div class="t-h5">This view configuration is invalid</div>' +
+      '<ul class="t-body2">' + built.errors.map(e=>'<li>'+e+'</li>').join("") + '</ul>' +
+      '</div></div>';
+    if (callbacks.onError) built.errors.forEach(e=>callbacks.onError(e));
+    return { submit: ()=>null, unmount: ()=>{ container.innerHTML=""; } };
+  }
+
+  const camp = built.dataset;
+  const view = built.view;
+  const readOnly = built.readOnly;
+  const metricPool = view.mode==="guided" && Array.isArray(view.allowedMetrics)
+    ? METRICS.filter(m=>view.allowedMetrics.includes(m.key)) : METRICS;
+  const breakdownPool = view.mode==="guided" && Array.isArray(view.allowedBreakdowns)
+    ? built.availableBreakdowns.filter(b=>view.allowedBreakdowns.includes(b.key)) : built.availableBreakdowns;
+
+  // View-only plugin: state is purely local to this mount, never reported
+  // back to the host and never persisted. There is nothing to resume.
+  const startingView = view.mode==="single" ? view.lockedView : (view.initialView || {
+    metric: metricPool[0].key, breakdown: breakdownPool[0].key, chartType: "Line"
+  });
+  const state = { metric: startingView.metric, breakdown: startingView.breakdown, chartType: startingView.chartType };
+
+  let mainChart = null;
+
+  container.innerHTML = '<div class="pr-root'+(readOnly?' pr-readonly':'')+'">' +
+    '<div class="pr-header">' +
+      '<div><div class="t-h4">'+camp.title+'</div><div class="pr-sub t-body2">'+camp.sub+'</div></div>' +
+      '<div class="pr-badges">' +
+        (camp.__placeholder ? '<span class="pr-badge locked t-body2">Placeholder data</span>' : "") +
+        (readOnly ? '<span class="pr-badge locked t-body2">Read-only</span>' : '<span class="pr-badge t-body2">'+view.mode+' mode</span>') +
+      '</div>' +
+    '</div>' +
+    (view.showOverview!==false && Object.keys(camp.overview||{}).length ? '<div class="pr-overview t-body2 js-overview"></div>' : "") +
+    (view.mode==="single"
+      ? '<div class="pr-lockedline t-body2 js-lockedline"></div>'
+      : '<div class="pr-controlbar"><div class="pr-fields">' +
+          '<div class="pr-field"><label class="t-label" for="prMetric">Metric</label><select id="prMetric" class="pr-select"></select></div>' +
+          '<div class="pr-field"><label class="t-label" for="prBreakdown">Break down by</label><select id="prBreakdown" class="pr-select"></select></div>' +
+          '<div class="pr-field"><label class="t-label" for="prChart">Chart</label><select id="prChart" class="pr-select"></select></div>' +
+        '</div></div>') +
+    '<div class="pr-chartcard"><div class="pr-charttitle t-body1-semi js-title"></div>' +
+      '<div class="pr-chart-wrap" role="img" aria-label="" id="prChartAria"><canvas id="prCanvas"></canvas></div></div>' +
+    '<div class="pr-tip t-body2 js-tip"></div>' +
+  '</div>';
+
+  const root = container.querySelector(".pr-root");
+  const ovEl = root.querySelector(".js-overview");
+  if (ovEl){
+    const ov = camp.overview || {};
+    ovEl.innerHTML = ["objective","budget","audience","model"].filter(k=>ov[k])
+      .map(k=>'<b>'+k[0].toUpperCase()+k.slice(1)+':</b> '+ov[k]).join('<span class="sep">|</span>');
+  }
+  if (view.mode==="single"){
+    const lv = view.lockedView;
+    root.querySelector(".js-lockedline").innerHTML =
+      '<b>Locked view</b> — '+METRICS.find(m=>m.key===lv.metric).label+' by '+
+      breakdownPool.find(b=>b.key===lv.breakdown).label.toLowerCase()+' ('+lv.chartType+')';
+  } else {
+    const selMetric = root.querySelector("#prMetric");
+    const selBreakdown = root.querySelector("#prBreakdown");
+    const selChart = root.querySelector("#prChart");
+    selMetric.innerHTML = metricPool.map(m=>'<option value="'+m.key+'"'+(m.key===state.metric?" selected":"")+'>'+m.label+'</option>').join("");
+    selBreakdown.innerHTML = breakdownPool.map(b=>'<option value="'+b.key+'"'+(b.key===state.breakdown?" selected":"")+'>'+b.label+'</option>').join("");
+    selChart.innerHTML = CHARTTYPES.map(c=>'<option value="'+c+'"'+(c===state.chartType?" selected":"")+'>'+c+'</option>').join("");
+    [selMetric,selBreakdown,selChart].forEach(el=> el.disabled = readOnly);
+    selMetric.onchange = e=>{ state.metric=e.target.value; renderChart(); };
+    selBreakdown.onchange = e=>{ state.breakdown=e.target.value; renderChart(); };
+    selChart.onchange = e=>{ state.chartType=e.target.value; renderChart(); };
+  }
+
+  function chartConfig(data, metric, chartType, compact){
+    const type = chartType==="Bar" ? "bar" : "line";
+    return { type, data:{ labels:data.labels, datasets:data.datasets.map(ds=>({
+        label:ds.label, data:ds.data, borderColor:ds.color,
+        backgroundColor: type==="bar" ? ds.color : "transparent",
+        borderWidth:2, tension:.3, pointRadius: type==="bar"?0:3, pointHoverRadius:4, spanGaps:false,
+        borderRadius: type==="bar" ? 4 : 0, maxBarThickness:34
+      })) },
+      options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:"index",intersect:false},
+        plugins:{ legend:{ display:true, position:"bottom", labels:{usePointStyle:true,pointStyle:"line",boxWidth:22,font:{size:compact?10:12}} },
+          tooltip:{ callbacks:{ label:(ctx)=>" "+ctx.dataset.label+": "+fmtVal(ctx.raw, metric.fmt) } } },
+        scales:{ y:{ beginAtZero:true, ticks:{callback:(v)=>fmtVal(v,metric.fmt),font:{size:compact?9:11}}, grid:{color:"#f1f2f5"} },
+          x:{ ticks:{autoSkip:true,maxRotation:0,font:{size:compact?9:11}}, grid:{display:false} } } } };
+  }
+  function renderChart(){
+    const metric = METRICS.find(m=>m.key===state.metric);
+    const breakdown = breakdownPool.find(b=>b.key===state.breakdown) || built.availableBreakdowns.find(b=>b.key===state.breakdown);
+    root.querySelector(".js-title").textContent = metric.label+" — by "+breakdown.label.toLowerCase();
+    root.querySelector("#prChartAria").setAttribute("aria-label", metric.label+" by "+breakdown.label+" chart");
+    const data = getChartData(camp, state.breakdown, state.metric);
+    if (mainChart){ mainChart.destroy(); mainChart=null; }
+    mainChart = new Chart(root.querySelector("#prCanvas").getContext("2d"), chartConfig(data, metric, state.chartType, false));
+    root.querySelector(".js-tip").innerHTML = '<b>Tip:</b> ratio metrics (CTR, CPC, CPL, conversion rate, CAC, ROAS, ROI) are computed from each week\'s own raw counts. A gap in a line means that week\'s denominator was zero (e.g. no conversions, so CAC is undefined).';
+  }
+
+  renderChart();
+
+  return {
+    // View-only: nothing is ever collected from the learner, so there is
+    // never anything to submit. The type signature explicitly allows null
+    // for exactly this case.
+    submit(){ return null; },
+    unmount(){
+      if (mainChart) mainChart.destroy();
+      container.innerHTML = "";
+    }
+  };
+}
+
+/* ======================================================================
+   HOST-SIDE SAMPLE DATA
+   These constants exist only to populate fixtures below. mount() and every
+   function it calls NEVER reference them — they're not reachable from
+   inside the plugin, only from this outer harness. Once loaded into the
+   JSON editor, they are indistinguishable from data a lesson author typed
+   in by hand.
+   ====================================================================== */
+const SAMPLE_DTC_DATASET = {
+  title: 'Lumen Skin — "Hydration Reset" Launch',
+  sub: "6-week acquisition campaign",
+  overview: {
+    objective: "First-purchase acquisition &middot; CAC ≤ $35, ROAS ≥ 3.0×",
+    budget: "$180,000 media spend, 100% delivered",
+    audience: "Women 25–50, skincare-engaged · US / UK / CA / DE / AU",
+    model: "DTC transactional + subscribe &amp; save · 62% gross margin"
+  },
+  margin: 0.62, ltvMultiplier: 2.514,
+  weeks: ["Week 1","Week 2","Week 3","Week 4","Week 5","Week 6"],
+  dimensions: {"channel":{"label":"Channel","entities":{"Email / CRM":{"impressions":[10040,9848,10836,11057,9134,9085],"clicks":[673,789,807,990,880,661],"spend":[994,1089,1038,990,1062,827],"leads":[246,298,321,350,301,284],"conversions":[39,41,54,54,48,42],"revenue":[3618,3756,4780,4412,4476,3700]},"Google Search":{"impressions":[238169,282001,376549,334281,349454,269546],"clicks":[15122,14421,14808,15880,17223,15046],"spend":[6174,6663,8541,7427,7493,6702],"leads":[1147,1447,1351,1477,1283,1195],"conversions":[286,371,338,357,368,315],"revenue":[23341,25816,32581,28585,26133,22274]},"Google Shopping":{"impressions":[440348,527454,537928,549640,574960,469670],"clicks":[6525,7109,9613,9389,7325,6539],"spend":[2853,3912,4201,3891,3375,2768],"leads":[453,567,536,633,550,461],"conversions":[121,138,164,177,154,129],"revenue":[9363,11004,12556,11477,10766,10176]},"Meta Ads":{"impressions":[2001965,2456654,2726058,2555510,2360115,2099698],"clicks":[25154,32962,34303,36059,27459,28663],"spend":[10150,13319,11283,12924,12479,11845],"leads":[1102,1252,1182,1292,1248,1124],"conversions":[391,397,438,410,398,366],"revenue":[27526,29198,30450,27874,28184,24876]},"TikTok Ads":{"impressions":[738003,983074,865588,1027622,912926,772787],"clicks":[10025,11868,11018,10302,10207,10180],"spend":[6117,6353,6573,7223,5909,5825],"leads":[206,230,248,220,213,183],"conversions":[41,44,47,49,39,34],"revenue":[2064,2374,2711,2632,2320,2377]}}},"persona":{"label":"Persona","entities":{"Routine Rebuilder":{"impressions":[1456160,1385084,1449782,1610929,1438545,1509500],"clicks":[18424,20837,19829,21504,18240,20066],"spend":[8446,11004,10789,11004,11462,8295],"leads":[1096,1049,1472,1457,1057,1069],"conversions":[430,421,516,443,421,449],"revenue":[31173,33203,35302,32192,35219,33911]},"Sensitive Skin Seeker":{"impressions":[781253,866884,1037013,1032717,807142,754991],"clicks":[12659,12863,12325,15115,12638,11800],"spend":[6624,7930,7290,8166,6857,7133],"leads":[737,858,809,892,777,727],"conversions":[243,305,263,329,258,222],"revenue":[18086,21722,27477,24296,21541,18098]},"Ingredient Nerd":{"impressions":[694859,759144,726925,635685,640253,663134],"clicks":[9319,11165,12063,12543,10391,11219],"spend":[4645,5814,5612,6461,5397,5071],"leads":[606,663,797,799,644,691],"conversions":[155,191,190,193,188,173],"revenue":[11818,14002,14935,14229,12294,11202]},"Trend Browser":{"impressions":[785132,1041304,1191923,1162554,1088755,990332],"clicks":[19151,19334,22757,22486,24409,20863],"spend":[5883,7235,8226,7598,6692,6366],"leads":[726,783,907,1005,941,838],"conversions":[64,79,86,80,82,69],"revenue":[3600,3157,3743,3670,3318,3212]}}},"device":{"label":"Device","entities":{"Mobile":{"impressions":[3058491,3484860,3165774,3207401,2884133,2699341],"clicks":[42530,43748,48697,50183,49938,43224],"spend":[17202,22078,23560,23542,21870,19748],"leads":[1929,2515,2503,2692,2332,2029],"conversions":[462,481,622,619,593,507],"revenue":[30604,39205,40125,37136,34332,34230]},"Desktop":{"impressions":[793466,823702,834050,915290,790371,723121],"clicks":[10973,13804,15999,14071,14017,13456],"spend":[6375,6987,7256,6533,6394,6455],"leads":[847,1123,1080,1187,917,1046],"conversions":[300,369,399,400,344,345],"revenue":[27255,33694,32003,32916,29132,30502]},"Tablet":{"impressions":[158925,194849,207124,193386,172874,202842],"clicks":[4615,5434,5196,5715,5151,5249],"spend":[1806,2182,2134,2113,2044,1721],"leads":[197,206,198,220,211,168],"conversions":[62,69,73,76,65,64],"revenue":[4848,4439,5986,5090,5114,4789]}}},"market":{"label":"Market","entities":{"Australia":{"impressions":[296451,347359,315294,313900,330052,296944],"clicks":[4646,5617,5095,5255,5791,4596],"spend":[2297,2184,2666,2749,2194,2310],"leads":[233,262,339,298,314,254],"conversions":[81,76,95,96,77,68],"revenue":[6352,7516,7743,8958,7608,6193]},"United Kingdom":{"impressions":[517958,540363,689092,603201,602716,496670],"clicks":[8728,9377,10293,10161,9735,7706],"spend":[4112,4582,4102,4180,4362,3862],"leads":[521,496,525,557,566,435],"conversions":[145,153,158,163,138,135],"revenue":[10180,13296,12629,12267,10512,9800]},"United States":{"impressions":[2349073,2243822,2423696,2627153,2588463,2067793],"clicks":[33174,36895,43585,41856,36145,35345],"spend":[16903,16867,19319,17334,18336,15641],"leads":[1954,2054,2176,2067,1966,2083],"conversions":[533,595,621,679,556,524],"revenue":[38254,41226,50831,44854,46176,38251]},"Canada":{"impressions":[392917,501883,511831,498843,395847,398679],"clicks":[6982,7516,6675,7818,7636,6373],"spend":[2802,3549,3740,3696,3505,2508],"leads":[327,383,439,382,389,380],"conversions":[93,120,109,122,111,85],"revenue":[7169,7846,8562,8482,6997,6384]},"Germany":{"impressions":[274365,311418,429561,412884,369671,362101],"clicks":[5186,6448,5539,6199,5917,5711],"spend":[2790,2659,2720,2585,2982,2464],"leads":[288,324,354,356,380,298],"conversions":[49,45,59,59,54,51],"revenue":[2112,2258,2498,2222,2135,2089]}}}}
+};
+
+const SAMPLE_SAAS_DATASET = {
+  title: 'Northgate "Shift Planner" — Q3 Demand Generation',
+  sub: "8-week lead-generation programme",
+  overview:{
+    objective:"Pipeline generation → paid seats &middot; CPL ≤ $60, CAC ≤ $2,800",
+    budget:"$240,000 media spend, 100% delivered",
+    audience:"Ops &amp; HR leaders, shift-based employers 50–1,000 staff",
+    model:"B2B SaaS subscription, per seat · 78% gross margin"
+  },
+  margin: 0.78, ltvMultiplier: 1.583,
+  weeks: ["Week 1","Week 2","Week 3","Week 4","Week 5","Week 6","Week 7","Week 8"],
+  dimensions: {"channel":{"label":"Channel","entities":{"G2 / Capterra":{"impressions":[36284,37087,36556,45158,45329,39712,37347,32527],"clicks":[1096,1026,1294,1196,1197,1079,1277,1135],"spend":[2624,3069,3436,3295,4097,3320,2923,3236],"leads":[76,83,82,91,83,75,90,71],"conversions":[2,2,3,3,3,2,2,2],"revenue":[22007,23480,22678,23910,24377,22556,23991,19629]},"Google Search":{"impressions":[144983,162630,156059,164666,166700,164304,138844,141814],"clicks":[2647,2826,3166,3894,3361,3382,2936,2588],"spend":[7872,7495,8659,9130,9676,9296,7565,8307],"leads":[215,210,218,225,264,206,187,211],"conversions":[5,4,5,5,5,5,4,4],"revenue":[38089,37933,37838,49507,43878,43645,32800,32438]},"LinkedIn Ads":{"impressions":[477170,476592,485487,539971,579555,469121,467910,404194],"clicks":[2691,3040,2692,3228,3260,3188,2833,2468],"spend":[12870,10948,11502,12192,11911,12863,10975,12739],"leads":[192,196,217,217,215,203,199,199],"conversions":[4,5,5,5,5,5,4,5],"revenue":[44369,53365,51054,49814,55166,50992,56168,44912]},"Webinar / partner":{"impressions":[55196,47580,57931,60070,63529,63200,50440,52054],"clicks":[546,711,787,717,710,789,592,548],"spend":[2712,2649,2947,2604,3134,2804,2702,2448],"leads":[13,15,16,18,19,17,15,14],"conversions":[0,0,0,1,1,0,0,0],"revenue":[1947,2192,2245,2376,2103,2373,1932,1920]},"Retargeting display":{"impressions":[337418,270358,319874,340554,349052,303092,321685,257967],"clicks":[980,965,918,1246,1164,947,928,952],"spend":[3482,3253,3417,4148,3546,3766,3159,3229],"leads":[14,13,14,15,14,13,13,12],"conversions":[0,0,0,0,0,0,0,0],"revenue":[0,0,0,0,0,0,0,0]}}},"persona":{"label":"Persona","entities":{"Ops Manager":{"impressions":[275917,366063,330338,347119,390043,342576,358341,289603],"clicks":[2461,2848,2892,3247,3099,2482,2817,2454],"spend":[9036,9120,10436,10693,11107,9661,9347,8600],"leads":[164,201,223,218,186,216,194,158],"conversions":[4,5,5,6,5,5,5,4],"revenue":[48999,56596,59412,61214,65071,59187,49357,58336]},"HR Director":{"impressions":[235497,284487,304095,291204,283343,247093,282357,221924],"clicks":[1994,2150,2200,2245,2540,2537,2302,1932],"spend":[6670,7779,8456,8211,8866,7781,7325,6912],"leads":[119,137,143,141,159,150,133,134],"conversions":[4,4,4,4,4,4,3,4],"revenue":[36683,39514,47765,43798,44751,40546,41412,36611]},"Shift Supervisor":{"impressions":[339077,353993,301381,353305,400408,300880,298023,302933],"clicks":[2825,2819,2820,2973,3005,2667,2977,2414],"spend":[5628,6856,7541,6874,7794,6427,7341,5539],"leads":[169,152,178,167,178,195,180,131],"conversions":[2,3,3,3,3,3,2,2],"revenue":[10563,10524,11633,12627,13026,10413,10287,10639]},"IT / Procurement":{"impressions":[108171,103832,110013,113704,123709,112133,112457,115981],"clicks":[997,996,1038,1164,956,1149,1017,983],"spend":[4642,5117,5875,6825,6787,5761,5629,5364],"leads":[29,29,33,34,32,27,26,24],"conversions":[0,0,1,1,1,1,0,1],"revenue":[5065,4812,5418,6197,6306,5208,4496,5218]}}},"device":{"label":"Device","entities":{"Desktop":{"impressions":[669071,566058,709663,719972,743066,615598,586693,589879],"clicks":[4561,4944,6146,6066,6205,6181,5314,4603],"spend":[17037,18130,21082,19293,21349,18153,17908,17048],"leads":[372,417,432,445,463,396,372,360],"conversions":[9,10,10,11,12,12,10,10],"revenue":[97260,98636,97886,99839,116961,108606,104920,85892]},"Mobile":{"impressions":[319949,376895,321009,429892,328612,346845,287130,339668],"clicks":[2705,3015,2873,3459,3244,2710,3035,2389],"spend":[8901,8951,11054,11732,10096,9306,9610,8350],"leads":[93,105,127,119,116,127,116,111],"conversions":[1,2,2,1,2,1,1,1],"revenue":[10112,12625,12363,14013,15088,12055,13728,10016]},"Tablet":{"impressions":[48029,56001,58361,61648,65915,51384,53426,55236],"clicks":[381,467,427,491,487,414,469,414],"spend":[1346,1434,1443,1781,1447,1666,1556,1327],"leads":[10,10,11,12,12,13,11,10],"conversions":[0,0,0,1,0,0,0,0],"revenue":[1316,1306,1533,1586,1727,1435,1525,1256]}}},"market":{"label":"Market","entities":{"Nordics":{"impressions":[87958,118410,101167,123572,104190,118901,93460,102342],"clicks":[770,925,1018,853,959,1010,895,770],"spend":[2447,3205,3484,3012,3179,2981,3013,2679],"leads":[44,56,47,51,60,59,55,54],"conversions":[1,2,1,2,2,1,2,1],"revenue":[12759,15177,15531,15787,14819,15112,13024,13135]},"United Kingdom":{"impressions":[163406,159880,173365,200399,174598,161529,166565,150258],"clicks":[1275,1272,1495,1542,1592,1601,1265,1458],"spend":[4525,4907,5000,5298,5029,4846,4525,4270],"leads":[79,71,82,95,99,86,85,85],"conversions":[2,2,3,2,2,2,2,2],"revenue":[22849,20689,23536,23333,22516,25822,19781,23034]},"United States":{"impressions":[471315,637785,661178,580969,594850,553155,575213,475535],"clicks":[4437,4257,5035,5102,5353,4741,5089,4586],"spend":[13709,14593,15522,20071,17168,18460,14886,15191],"leads":[277,286,327,295,297,266,261,291],"conversions":[6,7,7,7,7,6,7,7],"revenue":[56501,65467,70557,66614,68047,62923,69213,59726]},"DACH":{"impressions":[112483,119382,138096,130155,126062,134869,129502,109451],"clicks":[975,1146,1087,1174,1202,1059,967,990],"spend":[2999,3704,4017,4005,3754,3347,3624,3350],"leads":[53,66,70,69,71,68,57,58],"conversions":[1,1,1,1,1,1,1,1],"revenue":[8347,7989,9412,9584,9838,8224,7211,7747]},"ANZ":{"impressions":[67227,80284,88670,98223,80732,75797,76520,82547],"clicks":[572,561,675,674,702,708,655,553],"spend":[2317,2034,2346,2756,2679,2487,2345,2236],"leads":[40,44,43,41,44,47,43,38],"conversions":[0,0,0,1,1,1,1,1],"revenue":[3885,4792,4674,5052,5323,4850,4652,4152]}}}}
+};
+
+const SAMPLE_FIELDFORGE_DATASET = {
+  title: "Field & Forge — Trailhead Restock",
+  sub: "4-week retention/winback push",
+  overview:{
+    objective:"Reactivate lapsed customers &middot; ROAS ≥ 2.5×",
+    budget:"$36,000 media spend",
+    audience:"Past purchasers, 9–18 months lapsed · US / CA / UK",
+    model:"DTC outdoor apparel · 55% gross margin"
+  },
+  margin: 0.55, ltvMultiplier: 2.0,
+  weeks: ["Week 1","Week 2","Week 3","Week 4"],
+  dimensions: {"persona":{"label":"Persona","entities":{"Weekend Explorer":{"impressions":[329979,402319,357720,309982],"clicks":[4472,6097,5974,4457],"spend":[3482,4647,3731,3140],"leads":[495,604,609,592],"conversions":[97,111,120,102],"revenue":[9346,11166,9037,9151]},"Trail Runner":{"impressions":[233485,319962,314710,231843],"clicks":[3483,4365,4363,3789],"spend":[2902,3403,3418,2777],"leads":[453,515,530,402],"conversions":[85,101,84,80],"revenue":[7991,7654,8222,7633]},"Gear Collector":{"impressions":[168681,172091,171061,188167],"clicks":[2408,3009,3098,2485],"spend":[1855,2219,2373,2053],"leads":[251,326,324,299],"conversions":[44,53,46,37],"revenue":[3652,4096,4180,4272]}}},"market":{"label":"Market","entities":{"United States":{"impressions":[434289,568080,521415,476216],"clicks":[7057,7516,8307,7120],"spend":[5486,5597,5456,5461],"leads":[929,885,852,734],"conversions":[143,163,165,139],"revenue":[12052,15911,13513,13424]},"Canada":{"impressions":[162186,199272,190511,148031],"clicks":[2385,3133,2778,2204],"spend":[1913,2386,1998,1703],"leads":[281,334,320,265],"conversions":[48,59,52,51],"revenue":[4484,5247,4859,4310]},"United Kingdom":{"impressions":[119162,129838,132521,118479],"clicks":[1716,1892,1904,1988],"spend":[1401,1426,1718,1455],"leads":[188,212,221,179],"conversions":[29,41,38,32],"revenue":[3114,3029,3782,2675]}}}}
+};
+
+/* ======================================================================
+   HOST HARNESS  (simulates the Maestro platform launching this plugin
+   with different inputs — this whole block is OUTSIDE the plugin)
+   ====================================================================== */
+const FIXTURES = [
+  {
+    id:"empty", name:"1 · Empty inputs (default empty state)",
+    desc:"inputs = {} — no dataset at all. The plugin falls back to an obviously-fake placeholder rather than a blank box.",
+    inputs: {}
+  },
+  {
+    id:"explorer", name:"2 · Full explorer — DTC skincare launch",
+    desc:'mode:"explorer" — every metric, breakdown and chart type is open. The dataset below is the entire data source, nothing is bundled.',
+    inputs: { dataset: SAMPLE_DTC_DATASET, view:{ mode:"explorer", showOverview:true,
+      initialView:{ metric:"spend", breakdown:"channel", chartType:"Line" } } }
+  },
+  {
+    id:"single", name:"3 · Single locked view — SaaS CAC by channel",
+    desc:'mode:"single" — no controls at all, launched straight into one fixed chart. "Launch it with only one view."',
+    inputs: { dataset: SAMPLE_SAAS_DATASET, view:{ mode:"single", showOverview:false,
+      lockedView:{ metric:"cac", breakdown:"channel", chartType:"Line" } } }
+  },
+  {
+    id:"guided", name:"4 · Guided comparison — Field & Forge",
+    desc:'mode:"guided" restricts choices to Spend/ROAS/CAC × Persona/Market on a completely different, smaller dataset.',
+    inputs: { dataset: SAMPLE_FIELDFORGE_DATASET, view:{ mode:"guided",
+      allowedMetrics:["spend","roas","cac"], allowedBreakdowns:["persona","market"],
+      initialView:{ metric:"roas", breakdown:"persona", chartType:"Bar" } } }
+  },
+  {
+    id:"readonly", name:"5 · Read-only view",
+    desc:"readOnly:true — the controls render so the viewer can see what's selected, but every select is disabled. Useful for a locked reference view.",
+    inputs: { dataset: SAMPLE_DTC_DATASET, readOnly:true, view:{ mode:"explorer",
+      initialView:{ metric:"roi", breakdown:"market", chartType:"Bar" } } }
+  },
+  {
+    id:"invalid", name:"6 · Invalid input (error state demo)",
+    desc:"lockedView.metric references a metric that doesn't exist — the plugin must show an inline error and never crash.",
+    inputs: { dataset: SAMPLE_SAAS_DATASET, view:{ mode:"single",
+      lockedView:{ metric:"totally-not-a-metric", breakdown:"channel", chartType:"Line" } } }
+  },
+  {
+    id:"template", name:"7 · Blank dataset — start from scratch",
+    desc:"The smallest possible valid dataset: one dimension, two entities, three weeks. Every number here is exactly "+
+      "what gets plotted — no hidden math, no lookups, no generation. Edit freely and click Launch.",
+    inputs: {
+      dataset: {
+        title:"My Campaign", sub:"Describe the campaign here",
+        overview:{ objective:"What is this campaign trying to do?", budget:"Total spend and delivery",
+          audience:"Who is being targeted", model:"Commerce model and margin" },
+        margin:0.6, ltvMultiplier:2.0,
+        weeks:["Week 1","Week 2","Week 3"],
+        dimensions:{
+          channel:{ label:"Channel", entities:{
+            "Channel A": { impressions:[300000,320000,310000], clicks:[4500,4800,4650], spend:[6000,6400,6200],
+              leads:[650,700,680], conversions:[95,102,98], revenue:[14000,15200,14600] },
+            "Channel B": { impressions:[220000,210000,225000], clicks:[3100,2950,3200], spend:[4200,4000,4300],
+              leads:[420,400,430], conversions:[58,55,60], revenue:[8200,7800,8500] }
+          }}
+        }
+      },
+      view:{ mode:"explorer" }
+    }
+  }
+];
+
+let currentInstance = null;
+
+function logCallback(tag, payload){
+  const log = document.getElementById("callbackLog");
+  const row = document.createElement("div");
+  row.className = "row"+(tag==="onError"?" err":"");
+  row.innerHTML = '<span class="tag t-mono">'+tag+'</span><span class="msg t-mono">'+
+    (typeof payload==="string" ? payload : JSON.stringify(payload)) + '</span>';
+  log.prepend(row);
+  while (log.children.length>10) log.removeChild(log.lastChild);
+}
+const hostCallbacks = { onError: (msg)=> logCallback("onError", msg) };
+
+function loadFixtureIntoEditor(id){
+  const fixture = FIXTURES.find(f=>f.id===id);
+  document.getElementById("fixtureDesc").textContent = fixture.desc;
+  document.getElementById("jsonInputs").value = JSON.stringify(fixture.inputs, null, 2);
+  document.getElementById("jsonError").textContent = "";
+  document.getElementById("jsonHint").textContent = "Loaded fixture "+fixture.id+" — edit the JSON, then click Launch.";
+  return fixture;
+}
+function launch(inputs){
+  if (currentInstance) currentInstance.unmount();
+  currentInstance = mount(document.getElementById("pluginHost"), inputs, hostCallbacks);
+}
+function launchFromEditor(){
+  const raw = document.getElementById("jsonInputs").value;
+  let parsed;
+  try { parsed = JSON.parse(raw); }
+  catch(e){
+    document.getElementById("jsonError").textContent = "Invalid JSON — "+e.message;
+    return;
+  }
+  document.getElementById("jsonError").textContent = "";
+  document.getElementById("jsonHint").textContent = "Launched from hand-edited JSON above. Pick a fixture to load a different starting point.";
+  launch(parsed);
+}
+
+const fixtureSelect = document.getElementById("fixtureSelect");
+fixtureSelect.innerHTML = FIXTURES.map(f=>'<option value="'+f.id+'">'+f.name+'</option>').join("");
+fixtureSelect.onchange = ()=> loadFixtureIntoEditor(fixtureSelect.value);
+document.getElementById("btnLaunch").onclick = ()=> launchFromEditor();
+document.getElementById("btnLaunchJson").onclick = ()=> launchFromEditor();
+
+fixtureSelect.value = "explorer";
+loadFixtureIntoEditor("explorer");
+launchFromEditor();
+</script>
+</body>
+</html>

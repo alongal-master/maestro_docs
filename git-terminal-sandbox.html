@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>git-terminal plugin — input playground</title>
+<style>
+/* ==========================================================================
+   HOST-PROVIDED DESIGN TOKENS (same illustrative values as the
+   marketing-analytics build — unchanged so both plugins render identically)
+   ========================================================================== */
+:root{
+  --color-bg:#f4f6fa; --color-bg-subtle:#eceef2;
+  --color-surface:#ffffff; --color-surface-raised:#ffffff;
+  --color-fg:#111827; --color-fg-secondary:#5b6472; --color-fg-tertiary:#8a94a3; --color-fg-disabled:#b6bcc6;
+  --color-border:#e3e6ec; --color-border-strong:#c7cdd8; --color-border-input:#c7cdd8;
+  --success-500:#0f8a5f; --error-500:#c0392b; --warning-500:#b45309;
+  --error-100:#fbe7e5; --error-600:#a5301f;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px; --space-8:32px; --space-12:48px;
+  --radius-md:8px; --radius-lg:12px; --radius-xl:16px; --radius-full:9999px;
+  --shadow-sm: 0 1px 2px rgba(17,24,39,.06);
+
+  /* ---- plugin-local additions -------------------------------------------
+     The host token set has no dark-surface ramp, and a terminal needs one.
+     Rather than sprinkle raw hex through the .gt-* rules, the terminal palette
+     is declared once here so the plugin body still only ever names tokens.
+     A real bundle would ship these under the plugin's own namespace. ------- */
+  --term-bg:#0f1420; --term-border:#2a3244;
+  --term-cmd:#e6ecfa; --term-out:#b9c4da; --term-dim:#7b88a3;
+  --term-prompt:#5ec4a0; --term-branch:#c9a227;
+  --term-err:#ff9b8a; --term-ok:#7ee0b4; --term-add:#7ee0b4; --term-del:#ff9b8a; --term-meta:#8fa6ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-bg);color:var(--color-fg);
+     font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;}
+
+.t-h3{font-size:20px;font-weight:700;letter-spacing:-.01em;margin:0}
+.t-h4{font-size:17px;font-weight:700;letter-spacing:-.01em;margin:0}
+.t-h5{font-size:14.5px;font-weight:650;margin:0}
+.t-body1{font-size:14px;font-weight:400}
+.t-body1-semi{font-size:14px;font-weight:650}
+.t-body2{font-size:12.5px;font-weight:400}
+.t-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.t-mono{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px}
+
+/* ---- host chrome ---- */
+.wrap{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
+.host-banner{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.host-banner .t-body2{color:var(--color-fg-secondary);max-width:660px}
+.host-tag{display:inline-block;background:var(--color-bg-subtle);color:var(--color-fg-secondary);
+  border-radius:var(--radius-full);padding:3px 10px;margin-left:var(--space-2)}
+
+.host-section{border:1px dashed var(--color-border-strong);border-radius:var(--radius-xl);
+  padding:var(--space-4);margin-top:var(--space-6);background:#fbfcfe}
+.host-section-label{display:flex;align-items:center;gap:var(--space-2);color:var(--color-fg-tertiary);margin-bottom:var(--space-3)}
+.host-section-label .dot{width:6px;height:6px;border-radius:99px;background:var(--color-fg-tertiary)}
+
+.fixture-row{display:flex;gap:var(--space-3);align-items:flex-end;flex-wrap:wrap}
+.field label{display:block;margin-bottom:6px;color:var(--color-fg-secondary)}
+select, button, textarea, input{font:inherit}
+select{border:1px solid var(--color-border-input);border-radius:var(--radius-md);padding:8px 10px;
+  background:var(--color-surface);color:var(--color-fg);min-width:300px}
+.btn{border:1px solid var(--color-border-strong);background:var(--color-surface);color:var(--color-fg);
+  border-radius:var(--radius-full);padding:9px 16px;cursor:pointer}
+.btn:hover{background:var(--color-bg-subtle)}
+.btn-primary{background:var(--color-fg);color:#fff;border-color:var(--color-fg)}
+.btn-primary:hover{opacity:.88}
+.btn-sm{padding:5px 12px}
+.fixture-desc{color:var(--color-fg-secondary);margin-top:var(--space-2);max-width:760px}
+
+.json-box{margin-top:var(--space-4);background:var(--color-fg);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);
+  color:#d7e0f5;max-height:400px;overflow:auto}
+.json-box .t-label{color:#93a3c9;display:block;margin-bottom:6px}
+.json-editor{width:100%;min-height:250px;resize:vertical;background:transparent;color:#d7e0f5;
+  border:1px solid #3a4562;border-radius:var(--radius-md);padding:8px;font-family:"SF Mono",Menlo,Consolas,monospace;
+  font-size:12px;line-height:1.5}
+.json-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:var(--space-3);flex-wrap:wrap}
+.json-error{color:#ff9b8a}
+.json-hint{color:#93a3c9}
+
+.callback-log{margin-top:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-lg);
+  background:var(--color-surface);max-height:150px;overflow:auto}
+.callback-log .row{display:flex;gap:var(--space-2);padding:7px 12px;border-bottom:1px solid var(--color-border)}
+.callback-log .row:last-child{border-bottom:none}
+.callback-log .tag{color:var(--color-fg-tertiary);white-space:nowrap}
+.callback-log .msg{color:var(--color-fg-secondary);word-break:break-word}
+.callback-log .row.err .tag{color:var(--error-600)}
+.callback-log .row.ok .tag{color:var(--success-500)}
+
+.panel-frame{border:1px solid var(--color-border-strong);border-radius:var(--radius-xl);
+  background:var(--color-surface);margin-top:var(--space-3);box-shadow:var(--shadow-sm)}
+.panel-frame-head{display:flex;justify-content:space-between;align-items:center;
+  padding:var(--space-2) var(--space-4);border-bottom:1px solid var(--color-border);color:var(--color-fg-tertiary)}
+
+.submit-row{display:flex;gap:var(--space-2);align-items:center;flex-wrap:wrap;margin-top:var(--space-3)}
+.submit-row .t-body2{color:var(--color-fg-secondary)}
+
+/* ==========================================================================
+   PLUGIN UI (.gt-root) — tokens only, never a raw hex
+   ========================================================================== */
+.gt-root{padding:var(--space-4);background:var(--color-surface)}
+.gt-root.gt-readonly{background:var(--color-bg-subtle)}
+
+.gt-header{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-3)}
+.gt-sub{color:var(--color-fg-secondary);margin-top:2px}
+.gt-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.gt-badge{display:inline-block;border-radius:var(--radius-full);padding:2px 9px;background:var(--color-bg-subtle);color:var(--color-fg-secondary)}
+.gt-badge.locked{background:var(--error-100);color:var(--error-600)}
+.gt-badge.good{background:#e9f7f1;color:var(--success-500)}
+
+
+.gt-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:var(--space-4);align-items:start}
+@media (max-width:900px){ .gt-grid{grid-template-columns:minmax(0,1fr)} }
+
+/* ---- terminal pane ---- */
+.gt-term{background:var(--term-bg);border-radius:var(--radius-lg);padding:var(--space-3);
+  height:560px;display:flex;flex-direction:column;min-width:0}
+.gt-term-scroll{flex:1;overflow:auto;padding-right:4px}
+.gt-line{white-space:pre-wrap;word-break:break-word;font-family:"SF Mono",Menlo,Consolas,monospace;
+  font-size:12.5px;line-height:1.55;color:var(--term-out)}
+.gt-line.cmd{color:var(--term-cmd)}
+.gt-line.err{color:var(--term-err)}
+.gt-line.ok{color:var(--term-ok)}
+.gt-line.hint{color:var(--term-dim)}
+.gt-line.meta{color:var(--term-meta)}
+.gt-line.add{color:var(--term-add)}
+.gt-line.del{color:var(--term-del)}
+.gt-line.blank{height:8px}
+.gt-prompt{color:var(--term-prompt)}
+.gt-prompt .br{color:var(--term-branch)}
+.gt-welcome{color:var(--term-dim);border-bottom:1px solid var(--term-border);
+  padding-bottom:var(--space-2);margin-bottom:var(--space-2)}
+.gt-welcome b{color:var(--term-cmd);font-weight:650}
+
+.gt-inputrow{display:flex;align-items:center;gap:var(--space-2);border-top:1px solid var(--term-border);
+  padding-top:var(--space-2);margin-top:var(--space-2)}
+.gt-input{flex:1;min-width:0;background:transparent;border:none;color:var(--term-cmd);
+  font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;padding:4px 0}
+.gt-input:focus{outline:none}
+.gt-legend{display:flex;gap:var(--space-3);flex-wrap:wrap;color:var(--term-dim);margin-top:6px}
+.gt-legend kbd{background:var(--term-border);color:var(--term-cmd);border-radius:4px;padding:1px 5px;
+  font-family:"SF Mono",Menlo,Consolas,monospace;font-size:11px}
+.gt-locked{border-top:1px solid var(--term-border);margin-top:var(--space-2);padding-top:var(--space-3);
+  color:var(--term-err);display:flex;align-items:center;gap:var(--space-2)}
+
+/* ---- right rail ---- */
+.gt-rail{display:flex;flex-direction:column;gap:var(--space-3);min-width:0}
+.gt-panel{border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4)}
+.gt-panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2);margin-bottom:var(--space-2)}
+.gt-panel-head .t-label{color:var(--color-fg-tertiary)}
+.gt-count{color:var(--color-fg-tertiary)}
+.gt-empty{color:var(--color-fg-tertiary);padding:2px 0}
+
+.gt-notice{border:1px solid var(--color-border-strong);background:var(--color-bg-subtle);
+  border-radius:var(--radius-md);padding:10px 14px;color:var(--color-fg-secondary);margin-bottom:var(--space-3)}
+.gt-notice b{color:var(--color-fg);font-weight:650}
+
+.gt-files{display:flex;flex-direction:column;margin-top:2px}
+.gt-file{display:flex;align-items:center;gap:var(--space-2);padding:7px 2px;
+  border-bottom:1px solid var(--color-border)}
+.gt-file:last-child{border-bottom:none}
+.gt-file .dot{width:8px;height:8px;border-radius:99px;background:var(--color-fg-tertiary);flex:none}
+.gt-file .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gt-file .lab{color:var(--color-fg-tertiary);white-space:nowrap}
+.gt-file .pencil{border:none;background:transparent;color:var(--color-fg-tertiary);cursor:pointer;
+  padding:2px 5px;border-radius:var(--radius-md);line-height:1;flex:none}
+.gt-file .pencil:hover{background:var(--color-bg-subtle);color:var(--color-fg)}
+.gt-file .pencil-spacer{width:23px;flex:none}
+.gt-file.s-untracked .dot{background:var(--error-500)}
+.gt-file.s-modified .dot{background:var(--warning-500)}
+.gt-file.s-staged .dot{background:var(--success-500)}
+.gt-file.s-clean .dot{background:var(--color-fg-tertiary)}
+.gt-file.s-ondisk .dot{background:var(--color-border-strong)}
+.gt-file.s-ignored{opacity:.62}
+.gt-file.s-ignored .dot{background:var(--color-border-strong)}
+.gt-file.s-ignored .name{text-decoration:line-through}
+.gt-file.s-deleted .dot{background:var(--error-600)}
+.gt-file.s-deleted .name{text-decoration:line-through}
+.gt-file.dir .name{color:var(--color-fg-secondary)}
+.gt-file.dir .dot{background:transparent;border:1.5px solid var(--color-border-strong)}
+
+.gt-legend2{display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-3);
+  padding-top:var(--space-2);border-top:1px solid var(--color-border);color:var(--color-fg-tertiary)}
+.gt-legend2 span{display:inline-flex;align-items:center;gap:5px}
+.gt-legend2 i{width:7px;height:7px;border-radius:99px;display:inline-block}
+
+.gt-newbtn{display:block;width:100%;text-align:left;border:1px dashed var(--color-border-strong);
+  background:transparent;color:var(--color-fg-secondary);border-radius:var(--radius-md);
+  padding:7px 11px;margin-top:var(--space-3);cursor:pointer}
+.gt-newbtn:hover{background:var(--color-bg-subtle);color:var(--color-fg)}
+
+.gt-editor{border:1px solid var(--color-border-strong);border-radius:var(--radius-md);
+  padding:var(--space-3);margin-top:var(--space-3);background:var(--color-bg-subtle)}
+.gt-editor .row{display:flex;gap:var(--space-2);align-items:center;margin-bottom:var(--space-2);flex-wrap:wrap}
+.gt-editor input[type=text]{flex:1;min-width:140px;border:1px solid var(--color-border-input);
+  border-radius:var(--radius-md);padding:6px 9px;background:var(--color-surface);color:var(--color-fg);
+  font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px}
+.gt-editor textarea{width:100%;min-height:96px;resize:vertical;border:1px solid var(--color-border-input);
+  border-radius:var(--radius-md);padding:8px;background:var(--color-surface);color:var(--color-fg);
+  font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px;line-height:1.5}
+.gt-editor .foot{display:flex;justify-content:space-between;align-items:center;gap:var(--space-2);margin-top:var(--space-2);flex-wrap:wrap}
+.gt-editor .counter{color:var(--color-fg-tertiary)}
+.gt-editor .counter.over{color:var(--error-600)}
+.gt-editor .err{color:var(--error-600);margin-top:6px}
+
+.gt-stage-row{display:flex;align-items:center;gap:var(--space-2);padding:4px 0}
+.gt-stage-row .kind{color:var(--success-500);font-weight:650;min-width:66px}
+.gt-stage-row .kind.del{color:var(--error-600)}
+.gt-stage-row .fname{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px}
+
+.gt-commits{position:relative;padding-left:var(--space-4);margin-top:2px}
+.gt-commits:before{content:"";position:absolute;left:4px;top:10px;bottom:10px;width:2px;background:var(--color-border)}
+.gt-commit{position:relative;padding:6px 0 10px}
+.gt-commit:before{content:"";position:absolute;left:-16px;top:11px;width:10px;height:10px;border-radius:99px;
+  background:var(--success-500);border:2px solid var(--color-surface)}
+.gt-commit .top{display:flex;align-items:baseline;gap:var(--space-2);flex-wrap:wrap}
+.gt-commit .hash{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px;color:var(--color-fg-secondary);
+  background:var(--color-bg-subtle);border-radius:var(--radius-md);padding:1px 7px}
+.gt-commit .msg{font-weight:650}
+.gt-commit .when{color:var(--color-fg-tertiary)}
+.gt-commit .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.gt-commit .tag{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:11px;color:var(--color-fg-secondary);
+  border:1px solid var(--color-border);border-radius:var(--radius-full);padding:1px 8px}
+.gt-commit.head .msg:after{content:"HEAD";font-family:inherit;font-size:10.5px;font-weight:700;
+  letter-spacing:.07em;color:var(--success-500);background:#e9f7f1;border-radius:var(--radius-full);
+  padding:1px 7px;margin-left:8px;vertical-align:1px}
+
+.gt-error{border:1px solid var(--error-100);background:var(--error-100);border-radius:var(--radius-lg);
+  padding:var(--space-4);color:var(--error-600)}
+.gt-error ul{margin:var(--space-2) 0 0;padding-left:18px}
+
+.gt-root button:focus-visible, .gt-root input:focus-visible, .gt-root textarea:focus-visible,
+select:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible{
+  outline:2px solid var(--color-fg); outline-offset:2px;
+}
+.gt-term .gt-input:focus-visible{outline:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="host-banner">
+    <div>
+      <h1 class="t-h3">git-terminal plugin — input playground</h1>
+      <div class="t-body2">A stateful plugin. It starts from <span class="t-mono">inputs</span>, the learner edits
+        that state by typing commands (or by editing files in the right rail), and
+        <span class="t-mono">submit()</span> returns the whole session back to the host. The returned JSON is itself a
+        valid <span class="t-mono">inputs.resume</span> value — submit, click "load submission as resume", and the
+        session comes back verbatim. Everything is in-memory: no real filesystem, no network.</div>
+    </div>
+    <span class="host-tag t-body2">1 HTML file, no filetree</span>
+  </div>
+
+  <div class="host-section">
+    <div class="host-section-label"><span class="dot"></span><span class="t-label">Host — choose an input fixture</span></div>
+    <div class="fixture-row">
+      <div class="field">
+        <label class="t-label" for="fixtureSelect">Fixture</label>
+        <select id="fixtureSelect"></select>
+      </div>
+      <button class="btn btn-primary" id="btnLaunch">Launch</button>
+    </div>
+    <div class="fixture-desc t-body2" id="fixtureDesc"></div>
+
+    <div class="json-box">
+      <span class="t-label">inputs live here — every field is optional, {} is valid</span>
+      <textarea id="jsonInputs" class="json-editor" spellcheck="false" aria-label="Plugin inputs JSON, editable"></textarea>
+      <div class="json-actions">
+        <span class="t-body2 json-hint" id="jsonHint">Selecting a fixture loads its JSON here — edit it, then click Launch.</span>
+        <button class="btn" id="btnLaunchJson">Launch this JSON</button>
+      </div>
+      <div class="t-body2 json-error" id="jsonError"></div>
+    </div>
+
+    <div class="submit-row">
+      <button class="btn btn-sm" id="btnSubmit">Call submit()</button>
+      <button class="btn btn-sm" id="btnResume">Load submission as inputs.resume</button>
+      <span class="t-body2">submit() returns <span class="t-mono">{ commandHistory, repoState }</span> — the full transcript plus the repo.</span>
+    </div>
+
+    <div class="callback-log" id="callbackLog"></div>
+  </div>
+
+  <div class="host-section" style="margin-top:var(--space-4)">
+    <div class="host-section-label"><span class="dot"></span><span class="t-label">Plugin surface — side panel</span></div>
+    <div class="panel-frame">
+      <div class="panel-frame-head">
+        <span class="t-body2">git-terminal · v1</span>
+        <span class="t-body2">rendered by mount(container, inputs, callbacks)</span>
+      </div>
+      <div id="pluginHost"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ======================================================================
+   MANIFEST (informal — stands in for src/manifest.json)
+   ====================================================================== */
+const MANIFEST = {
+  id: "git-terminal",
+  version: "0.1.0",
+  displayName: "Git terminal sandbox",
+  icon: "terminal",
+  // No CDN, no fetch, no timers: the whole emulator is the code below.
+  capabilities: { network: false, resumable: true },
+  inputSchemaTopLevelKeys: ["initialFiles","gitignorePatterns","readOnly","resume"],
+  // submit() returns exactly this shape, and this shape is accepted back as
+  // inputs.resume — one schema for both directions.
+  submissionSchema: {
+    commandHistory: "{ input: string, output: string }[]",
+    repoState: {
+      initialized: "boolean",
+      files: "{ name, content, status, stagedContent?, committedContent? }[]",
+      commits: "{ hash, message, files, timestamp }[]",
+      gitignorePatterns: "string[]"
+    }
+  }
+};
+
+/* CORE_START — pure emulator, no DOM access below this line until RENDER */
+
+const BRANCH   = "main";
+const CWD      = "/home/learner/project";
+const MAX_EDIT_CHARS  = 200;   // the file-panel editor, per spec
+const MAX_WRITE_CHARS = 500;   // terminal redirects, so `echo >>` can't run away
+
+const FILE_STATUSES = ["untracked","modified","clean"];
+
+// Used only when inputs.initialFiles is absent. A three-file starter project.
+const DEFAULT_FILES = [
+  { name:"app.py",    content:"def main():\n    print(\"hello\")\n\nmain()", status:"untracked" },
+  { name:"README.md", content:"# Project\n\nA tiny practice project.",       status:"untracked" },
+  { name:"notes.txt", content:"todo: write tests",                          status:"untracked" }
+];
+
+const GIT_CMDS   = ["init","status","add","commit","log","diff","restore","rm"];
+const SHELL_CMDS = ["ls","cat","touch","mkdir","pwd","clear","echo","help"];
+
+// Deliberately out of scope. Each one gets a friendly redirect instead of a
+// wrong answer, so a learner who types it isn't left thinking it failed.
+const NOT_IN_LESSON = {
+  branch:"Branching", checkout:"Switching branches", switch:"Switching branches",
+  merge:"Merging", rebase:"Rebasing", "cherry-pick":"Cherry-picking",
+  push:"Pushing to a remote", pull:"Pulling from a remote", fetch:"Fetching from a remote",
+  clone:"Cloning", remote:"Remotes", tag:"Tags", stash:"Stashing",
+  reset:"Resetting history", revert:"Reverting commits", blame:"Blame",
+  bisect:"Bisect", submodule:"Submodules", config:"Config", show:"Showing objects"
+};
+
+/* ---------- tiny utilities ---------- */
+
+function esc(s){
+  return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+}
+
+// Splits on whitespace, honours single/double quotes, and pulls unquoted
+// > and >> out as their own tokens so `echo hi>f.txt` still parses.
+function tokenize(line){
+  const out = []; let cur = "", quote = null, started = false;
+  for (let i=0;i<line.length;i++){
+    const ch = line[i];
+    if (quote){ if (ch===quote) quote=null; else cur+=ch; continue; }
+    if (ch==='"' || ch==="'"){ quote=ch; started=true; continue; }
+    if (ch===" " || ch==="\t"){ if(cur||started){out.push(cur);cur="";started=false;} continue; }
+    if (ch===">"){
+      if(cur||started){out.push(cur);cur="";started=false;}
+      if(line[i+1]===">"){ out.push(">>"); i++; } else out.push(">");
+      continue;
+    }
+    cur += ch;
+  }
+  if (cur||started) out.push(cur);
+  return out;
+}
+
+function levenshtein(a,b){
+  const m=a.length,n=b.length; if(!m) return n; if(!n) return m;
+  let prev=Array.from({length:n+1},(_,j)=>j), row=new Array(n+1);
+  for(let i=1;i<=m;i++){
+    row[0]=i;
+    for(let j=1;j<=n;j++){
+      row[j]=Math.min(prev[j]+1, row[j-1]+1, prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    }
+    [prev,row]=[row,prev];
+  }
+  return prev[n];
+}
+function closest(word, pool){
+  let best=null, bestD=Infinity;
+  pool.forEach(p=>{ const d=levenshtein(word,p); if(d<bestD){bestD=d;best=p;} });
+  return bestD<=3 ? best : null;
+}
+
+// FNV-1a, so hashes are deterministic: the same session always produces the
+// same commit ids. Grading and resume both depend on that.
+function makeHash(seed){
+  let h = 0x811c9dc5;
+  for (let i=0;i<seed.length;i++){ h ^= seed.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  let s = (h>>>0).toString(16).padStart(8,"0");
+  s += Math.imul(h ^ 0x9e3779b9, 0x85ebca6b).toString(16).padStart(8,"0");
+  return s.slice(0,7);
+}
+
+/* ---------- line diff (LCS) ---------- */
+
+function splitLines(s){ return s==="" ? [] : String(s).split("\n"); }
+
+function diffLines(oldText, newText){
+  const A = splitLines(oldText), B = splitLines(newText);
+  const m=A.length, n=B.length;
+  const dp = Array.from({length:m+1}, ()=> new Array(n+1).fill(0));
+  for(let i=m-1;i>=0;i--) for(let j=n-1;j>=0;j--)
+    dp[i][j] = A[i]===B[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  const out=[]; let i=0,j=0;
+  while(i<m && j<n){
+    if(A[i]===B[j]){ out.push([" ",A[i]]); i++; j++; }
+    else if(dp[i+1][j] >= dp[i][j+1]){ out.push(["-",A[i]]); i++; }
+    else { out.push(["+",B[j]]); j++; }
+  }
+  while(i<m) out.push(["-",A[i++]]);
+  while(j<n) out.push(["+",B[j++]]);
+  return out;
+}
+function countChanges(oldText,newText){
+  let add=0,del=0;
+  diffLines(oldText,newText).forEach(([k])=>{ if(k==="+")add++; else if(k==="-")del++; });
+  return {add,del};
+}
+
+/* ---------- output lines ----------
+   Commands return typed lines so the terminal can colour them. The plain-text
+   join is what goes into commandHistory[].output, so the transcript a tutor
+   reads is exactly what the learner saw, minus the colour.               */
+function L(kind,text){ return {kind, text}; }
+function plain(lines){ return lines.map(l=>l.text).join("\n"); }
+
+/* ---------- .gitignore ----------
+   Single source of truth is the .gitignore FILE. Patterns are always derived
+   from its current content, so `echo ".log" >> .gitignore`, a panel edit and
+   `git restore .gitignore` all stay consistent for free.                  */
+function patternsOf(state){
+  const f = getFile(state, ".gitignore");
+  if (!f || f.deleted) return [];
+  return f.content.split("\n").map(s=>s.trim()).filter(s=>s && !s.startsWith("#"));
+}
+function escRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
+function matchesPattern(name, pat){
+  pat = String(pat).trim();
+  if (!pat || pat.startsWith("#")) return false;
+  if (pat.endsWith("/")){                       // node_modules/
+    const dir = pat.slice(0,-1);
+    return name === dir || name.startsWith(dir + "/");
+  }
+  const rx = new RegExp("^" + pat.split("*").map(escRe).join(".*") + "$");
+  if (rx.test(name)) return true;
+  const base = name.split("/").pop();
+  if (!pat.includes("/") && rx.test(base)) return true;
+  // Convenience: a bare extension like ".log" behaves as "*.log". Real git
+  // would want the star; beginners write it both ways, so accept both.
+  if (pat.startsWith(".") && !pat.includes("*") && !pat.includes("/")){
+    if (base.endsWith(pat) && base !== pat) return true;
+  }
+  return false;
+}
+function isIgnored(state, name){
+  return patternsOf(state).some(p => matchesPattern(name, p));
+}
+
+/* ---------- file helpers ---------- */
+
+function getFile(state, name){ return state.files.find(f => f.name === name) || null; }
+function liveFiles(state){ return state.files.filter(f => !f.deleted); }
+function sortedFiles(state){ return state.files.slice().sort((a,b)=>a.name.localeCompare(b.name)); }
+function isTracked(f){ return f.committedContent !== null || f.stagedContent !== null; }
+
+// The one place status is decided. Everything (chips, git status, submit)
+// reads from here, so the panel can never disagree with the terminal.
+function statusOf(state, f){
+  if (f.deleted) return "deleted";
+  if (!state.initialized) return "ondisk";
+  const tracked = isTracked(f);
+  if (!tracked) return isIgnored(state, f.name) ? "ignored" : "untracked";
+  const head = f.committedContent;
+  const idx  = f.stagedContent === null ? head : f.stagedContent;
+  if (idx !== head) return f.content !== idx ? "modified" : "staged";
+  return f.content !== head ? "modified" : "clean";
+}
+const STATUS_LABEL = {
+  untracked:"untracked", modified:"modified", staged:"staged",
+  clean:"clean", ignored:"ignored", deleted:"deleted", ondisk:"on disk"
+};
+
+function writeFile(state, name, content, cap){
+  const limit = cap || MAX_WRITE_CHARS;
+  let truncated = false;
+  if (content.length > limit){ content = content.slice(0, limit); truncated = true; }
+  const f = getFile(state, name);
+  if (f){ f.content = content; f.deleted = false; }
+  else state.files.push({ name, content, stagedContent:null, committedContent:null, deleted:false });
+  registerDir(state, name);
+  return truncated;
+}
+function registerDir(state, name){
+  if (!name.includes("/")) return;
+  const dir = name.split("/").slice(0,-1).join("/");
+  if (dir && !state.dirs.includes(dir)) state.dirs.push(dir);
+}
+
+/* ======================================================================
+   COMMANDS
+   ====================================================================== */
+
+const NOT_A_REPO = () => [L("err","fatal: not a git repository (or any of the parent directories): .git")];
+
+function cmdInit(state){
+  if (state.initialized){
+    return [L("out","Reinitialized existing Git repository in "+CWD+"/.git/"),
+            L("hint","(the repo was already initialized — nothing was lost)")];
+  }
+  // git init only creates .git/ — it never adds, removes or reveals files.
+  // Whatever was in the working directory at mount is still exactly what's
+  // there afterwards; only the status labels change from "on disk" to
+  // "untracked", because git now has an opinion about them.
+  state.initialized = true;
+  const out = [L("ok","Initialized empty Git repository in "+CWD+"/.git/")];
+  out.push(L("hint",liveFiles(state).length
+    ? "The files already in this folder are untracked until you add them. Try: git status"
+    : "No files yet. Try: touch app.py"));
+  return out;
+}
+
+function cmdStatus(state){
+  if (!state.initialized) return NOT_A_REPO();
+  const staged=[], notStaged=[], untracked=[];
+  sortedFiles(state).forEach(f=>{
+    if (f.deleted){ staged.push(["deleted",f.name]); return; }
+    const head = f.committedContent;
+    const idx  = f.stagedContent === null ? head : f.stagedContent;
+    if (isTracked(f)){
+      if (idx !== head) staged.push([head===null?"new file":"modified", f.name]);
+      if (f.content !== idx) notStaged.push(["modified", f.name]);
+    } else if (!isIgnored(state, f.name)) untracked.push(f.name);
+  });
+
+  const out = [L("out","On branch "+BRANCH)];
+  if (!state.commits.length){ out.push(L("blank",""), L("out","No commits yet")); }
+
+  if (staged.length){
+    out.push(L("blank",""), L("out","Changes to be committed:"),
+             L("hint",'  (use "git restore --staged <file>..." to unstage)'));
+    staged.forEach(([k,n]) => out.push(L("ok","\t"+(k+":").padEnd(12," ")+n)));
+  }
+  if (notStaged.length){
+    out.push(L("blank",""), L("out","Changes not staged for commit:"),
+             L("hint",'  (use "git add <file>..." to update what will be committed)'),
+             L("hint",'  (use "git restore <file>..." to discard changes in working directory)'));
+    notStaged.forEach(([k,n]) => out.push(L("err","\t"+(k+":").padEnd(12," ")+n)));
+  }
+  if (untracked.length){
+    out.push(L("blank",""), L("out","Untracked files:"),
+             L("hint",'  (use "git add <file>..." to include in what will be committed)'));
+    untracked.forEach(n => out.push(L("err","\t"+n)));
+  }
+
+  if (!staged.length && !notStaged.length && !untracked.length){
+    out.push(L("blank",""), L("out","nothing to commit, working tree clean"));
+  } else if (!staged.length){
+    out.push(L("blank",""), L("out", notStaged.length
+      ? 'no changes added to commit (use "git add" and/or "git commit -a")'
+      : 'nothing added to commit but untracked files present (use "git add" to track)'));
+  }
+  return out;
+}
+
+function cmdAdd(state, args){
+  if (!state.initialized) return NOT_A_REPO();
+  if (!args.length) return [
+    L("err","Nothing specified, nothing added."),
+    L("hint","Try: git add <file>   or   git add .   to stage everything.")
+  ];
+
+  const all = args.some(a => a==="." || a==="-A" || a==="--all");
+  let targets;
+  if (all){
+    targets = state.files.filter(f => f.deleted || !isIgnored(state,f.name) || isTracked(f));
+  } else {
+    targets = [];
+    const ignoredHits = [];
+    for (const a of args){
+      if (a.startsWith("-")) continue;
+      const f = getFile(state, a);
+      if (!f) return [L("err","fatal: pathspec '"+a+"' did not match any files"),
+                      L("hint","Check the name with: ls")];
+      if (!isTracked(f) && !f.deleted && isIgnored(state, a)) ignoredHits.push(a);
+      else targets.push(f);
+    }
+    if (ignoredHits.length){
+      const out = [L("err","The following paths are ignored by one of your .gitignore files:")];
+      ignoredHits.forEach(n => out.push(L("err","\t"+n)));
+      out.push(L("hint","hint: That is what .gitignore is for — this file will stay out of the repo."));
+      if (!targets.length) return out;
+      targets.forEach(f => stageOne(state,f));
+      out.push(L("blank",""), L("ok","Staged: "+targets.map(f=>f.name).join(", ")));
+      return out;
+    }
+  }
+
+  const changed = targets.filter(f => {
+    const head = f.committedContent;
+    const idx  = f.stagedContent === null ? head : f.stagedContent;
+    return f.deleted ? f.committedContent !== null : (f.content !== idx || idx !== head);
+  });
+  targets.forEach(f => stageOne(state,f));
+
+  const names = changed.map(f=>f.name).sort((a,b)=>a.localeCompare(b));
+  if (!names.length) return [L("hint","(nothing new to stage — those files already match the staging area)")];
+  return [L("ok","Staged "+names.length+" file"+(names.length===1?"":"s")+": "+names.join(", ")),
+          L("hint","Next: git status  or  git commit -m \"your message\"")];
+}
+function stageOne(state, f){
+  if (f.deleted) f.stagedContent = null;          // a staged deletion
+  else f.stagedContent = f.content;
+}
+
+function cmdCommit(state, args){
+  if (!state.initialized) return NOT_A_REPO();
+
+  const mi = args.findIndex(a => a==="-m" || a==="--message");
+  if (mi === -1) return [
+    L("err","This sandbox needs the message inline."),
+    L("hint",'Try: git commit -m "describe what you changed"')
+  ];
+  const message = (args[mi+1] || "").trim();
+  if (!message) return [
+    L("err","Aborting commit due to empty commit message."),
+    L("hint",'Put the message in quotes: git commit -m "add routes"')
+  ];
+
+  const staged = state.files.filter(f=>{
+    if (f.deleted) return f.committedContent !== null;
+    const head = f.committedContent;
+    const idx  = f.stagedContent === null ? head : f.stagedContent;
+    return idx !== head;
+  });
+  if (!staged.length){
+    const dirty = liveFiles(state).some(f => isTracked(f) && f.content !== (f.stagedContent===null?f.committedContent:f.stagedContent));
+    const untracked = liveFiles(state).some(f => !isTracked(f) && !isIgnored(state,f.name));
+    if (dirty || untracked) return [
+      L("err","no changes added to commit"),
+      L("hint","Stage something first: git add <file>")
+    ];
+    return [L("out","nothing to commit, working tree clean")];
+  }
+
+  let add=0, del=0, names=[];
+  staged.forEach(f=>{
+    const before = f.committedContent === null ? "" : f.committedContent;
+    const after  = f.deleted ? "" : f.stagedContent;
+    const c = countChanges(before, after);
+    add += c.add; del += c.del;
+    names.push(f.name);
+  });
+  names.sort();
+
+  const parent = state.commits.length ? state.commits[state.commits.length-1].hash : "";
+  const hash = makeHash(parent + "|" + message + "|" + names.join(",") + "|" + state.commits.length);
+  const commit = { hash, message, files:names.slice(), timestamp:new Date().toISOString() };
+  const rootCommit = state.commits.length === 0;
+  state.commits.push(commit);
+
+  // Apply: staged snapshot becomes the committed snapshot; tombstones vanish.
+  staged.forEach(f=>{
+    if (f.deleted){ state.files = state.files.filter(x=>x!==f); return; }
+    f.committedContent = f.stagedContent;
+  });
+
+  const parts = [];
+  if (add) parts.push(add+" insertion"+(add===1?"":"s")+"(+)");
+  if (del) parts.push(del+" deletion"+(del===1?"":"s")+"(-)");
+  const stat = " "+names.length+" file"+(names.length===1?"":"s")+" changed"+(parts.length?", "+parts.join(", "):"");
+  return [
+    L("ok","["+BRANCH+(rootCommit?" (root-commit)":"")+" "+hash+"] "+message),
+    L("out", stat),
+    L("hint","Saved. See it with: git log")
+  ];
+}
+
+function cmdLog(state){
+  if (!state.initialized) return NOT_A_REPO();
+  if (!state.commits.length) return [
+    L("err","fatal: your current branch '"+BRANCH+"' does not have any commits yet"),
+    L("hint",'Make one: git add . then git commit -m "first commit"')
+  ];
+  const out = [];
+  state.commits.slice().reverse().forEach((c,i)=>{
+    out.push(L("meta","commit "+c.hash+(i===0?"  (HEAD -> "+BRANCH+")":"")));
+    out.push(L("out","Date:   "+fmtDate(c.timestamp)));
+    out.push(L("blank",""));
+    out.push(L("out","    "+c.message));
+    out.push(L("blank",""));
+  });
+  out.pop();
+  return out;
+}
+function fmtDate(iso){
+  const d = new Date(iso);
+  if (isNaN(d)) return String(iso);
+  return d.toDateString() + " " + d.toTimeString().slice(0,8);
+}
+
+function cmdDiff(state, args){
+  if (!state.initialized) return NOT_A_REPO();
+  const staged = args.some(a => a==="--staged" || a==="--cached");
+  const names  = args.filter(a => !a.startsWith("-"));
+
+  let pool = liveFiles(state);
+  if (names.length){
+    pool = [];
+    for (const n of names){
+      const f = getFile(state,n);
+      if (!f || f.deleted) return [L("err","fatal: path '"+n+"' does not exist"),
+                                   L("hint","List what's here with: ls")];
+      pool.push(f);
+    }
+  }
+
+  const out = [];
+  pool.forEach(f=>{
+    const head = f.committedContent;
+    const idx  = f.stagedContent === null ? head : f.stagedContent;
+    const from = staged ? (head===null?"":head)  : (idx===null?"":idx);
+    const to   = staged ? (idx===null?"":idx)    : f.content;
+    if (staged && idx === head) return;
+    if (!staged && f.content === idx) return;
+    if (!staged && !isTracked(f)) return;   // untracked files have no diff base
+
+    out.push(L("meta","diff --git a/"+f.name+" b/"+f.name));
+    out.push(L("meta","--- a/"+f.name+(staged?"  (last commit)":"  (staging area)")));
+    out.push(L("meta","+++ b/"+f.name+(staged?"  (staging area)":"  (working directory)")));
+    diffLines(from,to).forEach(([k,text])=>{
+      out.push(L(k==="+"?"add":k==="-"?"del":"out", k+text));
+    });
+    out.push(L("blank",""));
+  });
+
+  if (!out.length){
+    if (staged) return [L("hint","(nothing staged — the staging area matches the last commit)")];
+    const anyUntracked = liveFiles(state).some(f=>!isTracked(f) && !isIgnored(state,f.name));
+    const hint = anyUntracked ? "(no tracked changes — git diff ignores untracked files; try git status)"
+                              : "(no changes — the working directory matches the staging area)";
+    return [L("hint",hint)];
+  }
+  out.pop();
+  return out;
+}
+
+function cmdRestore(state, args){
+  if (!state.initialized) return NOT_A_REPO();
+  const unstage = args.includes("--staged");
+  const names = args.filter(a=>!a.startsWith("-"));
+  if (!names.length) return [
+    L("err","fatal: you must specify path(s) to restore"),
+    L("hint",unstage ? "Try: git restore --staged <file>" : "Try: git restore <file>")
+  ];
+
+  const out = [];
+  for (const n of names){
+    const f = getFile(state,n);
+    if (!f) return [L("err","error: pathspec '"+n+"' did not match any file(s) known to git"),
+                    L("hint","Check the name with: ls")];
+    if (unstage){
+      if (!isTracked(f) && !f.deleted){ out.push(L("hint","("+n+" was never staged — nothing to unstage)")); continue; }
+      if (f.deleted){ f.deleted=false; f.content = f.committedContent; f.stagedContent = f.committedContent;
+                      out.push(L("ok","Unstaged "+n+" — restored from the last commit.")); continue; }
+      f.stagedContent = f.committedContent;   // null again for a never-committed file
+      out.push(L("ok","Unstaged "+n+" — the file itself is untouched."));
+    } else {
+      if (!isTracked(f)) return [L("err","error: pathspec '"+n+"' did not match any file(s) known to git"),
+                                 L("hint",n+" is untracked, so git has no saved version to restore. Stage it first with: git add "+n)];
+      const idx = f.stagedContent === null ? f.committedContent : f.stagedContent;
+      if (f.content === idx){ out.push(L("hint","("+n+" already matches the staging area — nothing to discard)")); continue; }
+      f.content = idx;
+      out.push(L("ok","Restored "+n+" — working changes discarded."));
+    }
+  }
+  return out;
+}
+
+function cmdRm(state, args){
+  if (!state.initialized) return NOT_A_REPO();
+  const cached = args.includes("--cached");
+  const names = args.filter(a=>!a.startsWith("-"));
+  if (!names.length) return [L("err","fatal: No pathspec was given."),
+                             L("hint","Try: git rm <file>   or   git rm --cached <file>")];
+  const out = [];
+  for (const n of names){
+    const f = getFile(state,n);
+    if (!f || f.deleted) return [L("err","fatal: pathspec '"+n+"' did not match any files")];
+    if (!isTracked(f)) return [L("err","fatal: pathspec '"+n+"' did not match any files"),
+                               L("hint",n+" is untracked — git isn't managing it. Delete it outside git, or add it first.")];
+    if (cached){
+      // Simplification: real git stages a deletion here, so the file shows up
+      // as BOTH "deleted" (staged) and "untracked" until you commit. This
+      // sandbox collapses that to plain untracked, because the chip model has
+      // one status per file and "stop tracking this" is the point being
+      // taught. Nothing else in the UI depends on the difference.
+      f.stagedContent = null; f.committedContent = null;
+      out.push(L("ok","rm '"+n+"'  (kept on disk, now untracked)"));
+      if (isIgnored(state,n)) out.push(L("hint","It matches .gitignore, so git will leave it alone from now on."));
+      else out.push(L("hint","It will show up as untracked until you add it again — or ignore it in .gitignore."));
+    } else {
+      f.deleted = true; f.content = ""; f.stagedContent = null;
+      if (f.committedContent === null) state.files = state.files.filter(x=>x!==f);
+      out.push(L("ok","rm '"+n+"'"), L("hint","Deletion staged. Commit it to record the removal."));
+    }
+  }
+  return out;
+}
+
+/* ---------- shell ---------- */
+
+function cmdLs(state, args){
+  const all = args.includes("-a") || args.includes("-la") || args.includes("-al");
+  let names = liveFiles(state).map(f=>f.name).concat(state.dirs.map(d=>d+"/"));
+  if (!all) names = names.filter(n => !n.split("/").pop().startsWith("."));
+  names.sort((a,b)=>a.localeCompare(b));
+  if (all) names = [".","..",...(state.initialized?[".git/"]:[]),...names];
+  if (!names.length) return [L("hint","(empty directory)")];
+  return [L("out", names.join("   "))];
+}
+
+function cmdCat(state, args){
+  const n = args[0];
+  if (!n) return [L("err","cat: missing file operand"), L("hint","Try: cat README.md")];
+  const f = getFile(state,n);
+  if (!f || f.deleted) return [L("err","cat: "+n+": No such file or directory")];
+  if (f.content === "") return [L("hint","(empty file)")];
+  return splitLines(f.content).map(t=>L("out",t));
+}
+
+function cmdTouch(state, args){
+  if (!args.length) return [L("err","touch: missing file operand")];
+  const out = [];
+  args.forEach(n=>{
+    const f = getFile(state,n);
+    if (f && !f.deleted){ out.push(L("hint","("+n+" already exists — timestamp updated, content untouched)")); return; }
+    writeFile(state,n,"");
+    out.push(L("ok","Created empty file "+n));
+    if (state.initialized) out.push(L("hint","It's untracked until you run: git add "+n));
+  });
+  return out;
+}
+
+function cmdMkdir(state, args){
+  if (!args.length) return [L("err","mkdir: missing operand")];
+  const out = [];
+  args.forEach(d=>{
+    d = d.replace(/\/$/,"");
+    if (state.dirs.includes(d)){ out.push(L("err","mkdir: cannot create directory '"+d+"': File exists")); return; }
+    state.dirs.push(d);
+    out.push(L("ok","Created directory "+d+"/"));
+    if (state.initialized) out.push(L("hint","Note: git doesn't track empty directories — it only records files. Put a file in it to see it in git status."));
+  });
+  return out;
+}
+
+function cmdEcho(state, tokens){
+  // tokens excludes the leading "echo"
+  const ri = tokens.findIndex(t => t===">" || t===">>");
+  const text = (ri===-1 ? tokens : tokens.slice(0,ri)).join(" ").replace(/\\n/g,"\n");
+  if (ri === -1) return text==="" ? [L("blank","")] : splitLines(text).map(t=>L("out",t));
+
+  const target = tokens[ri+1];
+  if (!target) return [L("err","bash: syntax error near unexpected token `newline'"),
+                       L("hint",'Try: echo "some text" > notes.txt')];
+  const append = tokens[ri]===">>";
+  const existing = (()=>{ const f=getFile(state,target); return f && !f.deleted ? f.content : ""; })();
+  let next;
+  if (append && existing !== "") next = existing + (existing.endsWith("\n") ? "" : "\n") + text;
+  else next = text;
+
+  const truncated = writeFile(state, target, next);
+  const out = [L("ok",(append?"Appended to ":"Wrote ")+target+" — "+getFile(state,target).content.length+" chars")];
+  if (truncated) out.push(L("err","(truncated at "+MAX_WRITE_CHARS+" characters — this is a sandbox, keep files small)"));
+  if (target === ".gitignore"){
+    const pats = patternsOf(state);
+    out.push(L("hint",pats.length ? "Ignore patterns now: "+pats.join(", ") : "(.gitignore is empty)"));
+    if (state.initialized) out.push(L("hint","Run git status to see which files just disappeared from the list."));
+  }
+  return out;
+}
+
+function cmdHelp(){
+  return [
+    L("out","Commands in this sandbox:"),
+    L("blank",""),
+    L("meta","  git"),
+    L("out","    git init                      start tracking this folder"),
+    L("out","    git status                    what changed, and what's staged"),
+    L("out","    git add <file> | . | -A       stage changes"),
+    L("out",'    git commit -m "message"       save the staged snapshot'),
+    L("out","    git log                       list commits, newest first"),
+    L("out","    git diff [--staged] [<file>]  line-by-line changes"),
+    L("out","    git restore <file>            discard working changes"),
+    L("out","    git restore --staged <file>   unstage, keep the file"),
+    L("out","    git rm [--cached] <file>      remove, or stop tracking"),
+    L("blank",""),
+    L("meta","  shell"),
+    L("out","    ls [-a]   cat <file>   touch <file>   mkdir <dir>   pwd   clear"),
+    L("out",'    echo "text" > file            write (>> appends)'),
+    L("blank",""),
+    L("hint","Branching, remotes and history rewriting are out of scope here.")
+  ];
+}
+
+/* ---------- dispatch ---------- */
+
+function runGit(state, args){
+  const sub = args[0];
+  if (!sub) return [L("out","usage: git <command> [<args>]"), L("hint","Type help to see what this sandbox supports.")];
+  const rest = args.slice(1);
+  switch (sub){
+    case "init":    return cmdInit(state);
+    case "status":  return cmdStatus(state);
+    case "add":     return cmdAdd(state, rest);
+    case "commit":  return cmdCommit(state, rest);
+    case "log":     return cmdLog(state);
+    case "diff":    return cmdDiff(state, rest);
+    case "restore": return cmdRestore(state, rest);
+    case "rm":      return cmdRm(state, rest);
+  }
+  if (NOT_IN_LESSON[sub]) return [
+    L("err",NOT_IN_LESSON[sub]+" isn't part of this lesson."),
+    L("hint","This sandbox stays on a single "+BRANCH+" branch with no remote, so you can focus on the core loop: edit → add → commit."),
+    L("hint","Supported: "+GIT_CMDS.map(c=>"git "+c).join(", "))
+  ];
+  const guess = closest(sub, GIT_CMDS.concat(Object.keys(NOT_IN_LESSON)));
+  const out = [L("err","git: '"+sub+"' is not a git command in this sandbox.")];
+  if (guess) out.push(L("hint","Did you mean: git "+guess+" ?"));
+  out.push(L("hint","Type help for the full list."));
+  return out;
+}
+
+function runShell(state, tokens){
+  const cmd = tokens[0], rest = tokens.slice(1);
+  switch (cmd){
+    case "ls":    return cmdLs(state, rest);
+    case "cat":   return cmdCat(state, rest);
+    case "touch": return cmdTouch(state, rest);
+    case "mkdir": return cmdMkdir(state, rest);
+    case "echo":  return cmdEcho(state, rest);
+    case "pwd":   return [L("out",CWD)];
+    case "help":  return cmdHelp();
+    case "clear": return [];      // handled by the caller
+  }
+  if (cmd === "rm" || cmd === "mv" || cmd === "cp" || cmd === "cd" || cmd === "nano" || cmd === "vim"){
+    const tip = {
+      rm:"Use git rm <file> so git records the removal.",
+      mv:"Renaming isn't wired up here — try touch for a new name.",
+      cp:"Copying isn't wired up here — try echo \"text\" > copy.txt.",
+      cd:"There's only one directory in this sandbox: "+CWD,
+      nano:"No editor here — write files with echo \"text\" > file, or use the pencil in the file panel.",
+      vim:"No editor here — write files with echo \"text\" > file, or use the pencil in the file panel."
+    }[cmd];
+    return [L("err",cmd+": not available in this sandbox."), L("hint",tip)];
+  }
+  const guess = closest(cmd, SHELL_CMDS.concat(["git"]));
+  const out = [L("err","command not found: "+cmd)];
+  if (guess) out.push(L("hint","Did you mean: "+guess+" ?"));
+  out.push(L("hint","Type help to see everything this sandbox understands."));
+  return out;
+}
+
+// The single entry point. Returns typed lines; the caller records the plain
+// text in state.history so the transcript and the screen never drift apart.
+function execute(state, raw){
+  const line = String(raw).trim();
+  if (!line) return [];
+  const tokens = tokenize(line);
+  if (!tokens.length) return [];
+
+  if (tokens[0] === "clear"){
+    state.history.push({ input: line, output: "" });
+    state.clearedAt = state.history.length;   // screen only; transcript is kept whole
+    return [];
+  }
+  const lines = tokens[0]==="git" ? runGit(state, tokens.slice(1)) : runShell(state, tokens);
+  // kinds is presentation-only and never reaches the submission (buildSubmission
+  // picks input/output explicitly) — it just keeps colour after a `clear`.
+  state.history.push({ input: line, output: plain(lines), kinds: lines.map(l=>l.kind) });
+  return lines;
+}
+
+/* ======================================================================
+   INPUT VALIDATION + STATE CONSTRUCTION
+   ====================================================================== */
+
+function validateInputs(rawInputs){
+  const inputs = (rawInputs && typeof rawInputs==="object" && !Array.isArray(rawInputs)) ? rawInputs : {};
+  const errors = [];
+  const notes  = [];
+
+  if (rawInputs && (typeof rawInputs!=="object" || Array.isArray(rawInputs)))
+    errors.push("inputs must be an object — got "+(Array.isArray(rawInputs)?"an array":typeof rawInputs)+".");
+
+  let files = null;
+  if (inputs.initialFiles !== undefined){
+    if (!Array.isArray(inputs.initialFiles)) errors.push("initialFiles must be an array.");
+    else {
+      const seen = {};
+      files = [];
+      inputs.initialFiles.forEach((f,i)=>{
+        if (!f || typeof f!=="object" || Array.isArray(f)){ errors.push("initialFiles["+i+"] must be an object."); return; }
+        if (typeof f.name !== "string" || !f.name.trim()){ errors.push('initialFiles['+i+'] is missing a "name".'); return; }
+        const name = f.name.trim();
+        if (seen[name]){ errors.push('Duplicate file name "'+name+'" in initialFiles.'); return; }
+        seen[name] = true;
+        if (f.content !== undefined && typeof f.content !== "string"){
+          errors.push("initialFiles["+i+"].content must be a string."); return;
+        }
+        const status = f.status === undefined ? "untracked" : f.status;
+        if (FILE_STATUSES.indexOf(status) === -1){
+          errors.push('initialFiles['+i+'].status must be one of '+FILE_STATUSES.join(", ")+' — got "'+status+'".'); return;
+        }
+        if (f.committedContent !== undefined && typeof f.committedContent !== "string"){
+          errors.push("initialFiles["+i+"].committedContent must be a string."); return;
+        }
+        files.push({ name, content: f.content===undefined ? "" : f.content, status,
+                     committedContent: f.committedContent });
+      });
+    }
+  }
+
+  let patterns = [];
+  if (inputs.gitignorePatterns !== undefined){
+    if (!Array.isArray(inputs.gitignorePatterns)) errors.push("gitignorePatterns must be an array of strings.");
+    else if (!inputs.gitignorePatterns.every(p=>typeof p==="string")) errors.push("gitignorePatterns must contain only strings.");
+    else patterns = inputs.gitignorePatterns.slice();
+  }
+
+  if (inputs.readOnly !== undefined && typeof inputs.readOnly !== "boolean")
+    errors.push("readOnly must be a boolean.");
+
+  let resume = null;
+  if (inputs.resume !== undefined && inputs.resume !== null){
+    const r = inputs.resume;
+    if (typeof r!=="object" || Array.isArray(r)) errors.push("resume must be an object shaped like a submission.");
+    else if (!r.repoState || typeof r.repoState!=="object") errors.push("resume.repoState is required — pass back exactly what submit() returned.");
+    else if (!Array.isArray(r.repoState.files)) errors.push("resume.repoState.files must be an array.");
+    else if (r.commandHistory !== undefined && !Array.isArray(r.commandHistory)) errors.push("resume.commandHistory must be an array.");
+    else resume = r;
+    if (resume && (inputs.initialFiles || inputs.gitignorePatterns))
+      notes.push("resume was supplied, so initialFiles and gitignorePatterns are ignored — the saved session wins.");
+  }
+
+  return {
+    ok: errors.length===0, errors, notes,
+    files, patterns, resume,
+    readOnly: !!inputs.readOnly
+  };
+}
+
+function buildState(built){
+  const state = { initialized:false, files:[], commits:[], dirs:[], history:[], clearedAt:0 };
+
+  /* ---- resume: restore a prior submission verbatim ---- */
+  if (built.resume){
+    const rs = built.resume.repoState;
+    state.initialized = !!rs.initialized;
+    state.files = rs.files.map(f=>({
+      name: String(f.name),
+      content: typeof f.content==="string" ? f.content : "",
+      stagedContent:    typeof f.stagedContent==="string"    ? f.stagedContent    : null,
+      committedContent: typeof f.committedContent==="string" ? f.committedContent : null,
+      deleted: f.status === "deleted"
+    }));
+    state.commits = Array.isArray(rs.commits) ? rs.commits.map(c=>({
+      hash:String(c.hash||""), message:String(c.message||""),
+      files:Array.isArray(c.files)?c.files.slice():[], timestamp:c.timestamp||new Date().toISOString()
+    })) : [];
+    state.history = Array.isArray(built.resume.commandHistory)
+      ? built.resume.commandHistory.map(h=>({ input:String(h.input||""), output:String(h.output||"") })) : [];
+    // gitignorePatterns round-trip through the .gitignore file. If a hand-written
+    // resume gives patterns without the file, materialise it so they still apply.
+    if (Array.isArray(rs.gitignorePatterns) && rs.gitignorePatterns.length && !getFile(state,".gitignore")){
+      state.files.push({ name:".gitignore", content:rs.gitignorePatterns.join("\n"),
+                         stagedContent:null, committedContent:null, deleted:false });
+    }
+    state.files.forEach(f=>registerDir(state,f.name));
+    return state;
+  }
+
+  /* ---- fresh start ---- */
+  const specs = built.files === null ? DEFAULT_FILES.slice() : built.files;
+  const needsHistory = specs.some(s => s.status==="clean" || s.status==="modified");
+
+  specs.forEach(s=>{
+    const f = { name:s.name, content:s.content, stagedContent:null, committedContent:null, deleted:false };
+    if (s.status === "clean"){
+      f.committedContent = s.committedContent !== undefined ? s.committedContent : s.content;
+      f.stagedContent    = f.committedContent;
+      f.content          = s.content;
+    } else if (s.status === "modified"){
+      // A "modified" file needs a baseline to be modified *against*. If the
+      // author supplies committedContent, use it. Otherwise the baseline is an
+      // empty file: the diff then shows the whole file as added, which is
+      // honest ("committed empty, then filled in") rather than invented.
+      f.committedContent = s.committedContent !== undefined ? s.committedContent : "";
+      f.stagedContent    = f.committedContent;
+      f.content          = s.content;
+    }
+    state.files.push(f);
+    registerDir(state, f.name);
+  });
+
+  if (built.patterns.length){
+    const existing = getFile(state,".gitignore");
+    if (existing) existing.content = built.patterns.join("\n");
+    else state.files.unshift({ name:".gitignore", content:built.patterns.join("\n"),
+                               stagedContent:null, committedContent:null, deleted:false });
+  }
+
+  if (needsHistory){
+    // Files handed over as clean/modified imply the repo already exists, so
+    // seed it with the root commit those states are relative to.
+    state.initialized = true;
+    const names = state.files.filter(f=>f.committedContent!==null).map(f=>f.name).sort();
+    state.commits.push({
+      hash: makeHash("root|"+names.join(",")),
+      message: "Initial commit",
+      files: names,
+      timestamp: new Date().toISOString()
+    });
+  }
+  return state;
+}
+
+function buildSubmission(state){
+  return {
+    commandHistory: state.history.map(h=>({ input:h.input, output:h.output })),
+    repoState: {
+      initialized: state.initialized,
+      files: state.files.map(f=>{
+        const o = { name:f.name, content:f.deleted?"":f.content, status:statusOf(state,f) };
+        if (f.stagedContent    !== null) o.stagedContent    = f.stagedContent;
+        if (f.committedContent !== null) o.committedContent = f.committedContent;
+        return o;
+      }),
+      commits: state.commits.map(c=>({ hash:c.hash, message:c.message, files:c.files.slice(), timestamp:c.timestamp })),
+      gitignorePatterns: patternsOf(state)
+    }
+  };
+}
+/* CORE_END */
+
+/* ======================================================================
+   THE PLUGIN CONTRACT
+   export function mount(container, inputs, callbacks): { submit, unmount }
+   ====================================================================== */
+function mount(container, inputs, callbacks){
+  callbacks = callbacks || {};
+  const built = validateInputs(inputs);
+
+  if (!built.ok){
+    container.innerHTML =
+      '<div class="gt-root"><div class="gt-error">' +
+      '<div class="t-h5">These lesson inputs are invalid</div>' +
+      '<ul class="t-body2">' + built.errors.map(e=>'<li>'+esc(e)+'</li>').join("") + '</ul>' +
+      '</div></div>';
+    if (callbacks.onError) built.errors.forEach(e=>callbacks.onError(e));
+    return { submit: ()=>null, unmount: ()=>{ container.innerHTML=""; } };
+  }
+  if (built.notes.length && callbacks.onError) built.notes.forEach(n=>callbacks.onError("note: "+n));
+
+  const state    = buildState(built);
+  const readOnly = built.readOnly;
+  // UI-only state: which chip's editor is open. Never part of the submission.
+  let editing = null;   // { name } | { name:null } for a new file
+  let editErr = "";
+  let histIdx = -1;     // ↑/↓ position in the command history
+
+  container.innerHTML =
+    '<div class="gt-root'+(readOnly?" gt-readonly":"")+'">' +
+      '<div class="gt-header">' +
+        '<div><div class="t-h4">Git sandbox</div>' +
+        '<div class="gt-sub t-body2">Everything runs in memory — no real files, nothing to break.</div></div>' +
+        '<div class="gt-badges js-badges"></div>' +
+      '</div>' +
+      '<div class="gt-grid">' +
+        '<div class="gt-term">' +
+          '<div class="gt-term-scroll js-scroll"><div class="js-lines"></div></div>' +
+          '<div class="js-inputzone"></div>' +
+        '</div>' +
+        '<div class="gt-rail js-rail"></div>' +
+      '</div>' +
+    '</div>';
+
+  const root    = container.querySelector(".gt-root");
+  const linesEl = root.querySelector(".js-lines");
+  const scroll  = root.querySelector(".js-scroll");
+  const railEl  = root.querySelector(".js-rail");
+  const inputZone = root.querySelector(".js-inputzone");
+
+  /* ---------- terminal ---------- */
+
+  function promptInner(){
+    return '~/project ' + (state.initialized ? '<span class="br">('+BRANCH+')</span> ' : '') + '$';
+  }
+  function promptHTML(){ return '<span class="gt-prompt js-promptline">'+promptInner()+'</span>'; }
+  // git init changes the prompt. Refresh it in place rather than re-rendering
+  // the input row, which would drop the caret mid-session.
+  function refreshPrompt(){
+    const p = inputZone.querySelector(".js-promptline");
+    if (p) p.innerHTML = promptInner();
+  }
+
+  const WELCOME =
+    '<div class="gt-line gt-welcome">Git sandbox — an <b>emulated</b> terminal. Nothing here touches a real filesystem.\n'+
+    'Type <b>help</b> for the command list.</div>';
+
+  function renderTerminal(){
+    let html = WELCOME;
+    // Replay the transcript from the last `clear` onward. The full history is
+    // still in state.history — clearing the screen never edits the record.
+    state.history.slice(state.clearedAt).forEach(h=>{
+      html += '<div class="gt-line cmd">'+promptHTML()+' '+esc(h.input)+'</div>';
+      if (h.output !== "") html += renderOutputBlock(h.output, h.kinds);
+    });
+    linesEl.innerHTML = html;
+    scroll.scrollTop = scroll.scrollHeight;
+  }
+
+  // Replayed history only has plain text, so re-derive colour from the line
+  // shape. Live commands pass their real kinds through and skip this.
+  function renderOutputBlock(text, kinds){
+    return splitLines(text).map((t,i)=>{
+      const kind = kinds ? kinds[i] : guessKind(t);
+      return '<div class="gt-line '+kind+'">'+(t===""?"&nbsp;":esc(t))+'</div>';
+    }).join("");
+  }
+  function guessKind(t){
+    if (t.startsWith("+")) return "add";
+    if (t.startsWith("-") && !t.startsWith("---")) return "del";
+    if (t.startsWith("diff --git") || t.startsWith("commit ") || t.startsWith("---") || t.startsWith("+++")) return "meta";
+    if (t.startsWith("(") || t.startsWith("hint:") || t.trim().startsWith("(use")) return "hint";
+    if (t.startsWith("fatal:") || t.startsWith("error:") || t.startsWith("command not found")) return "err";
+    return "out";
+  }
+
+  function appendLive(input, lines){
+    let html = '<div class="gt-line cmd">'+promptHTML()+' '+esc(input)+'</div>';
+    lines.forEach(l=>{
+      html += '<div class="gt-line '+l.kind+'">'+(l.text===""?"&nbsp;":esc(l.text))+'</div>';
+    });
+    linesEl.insertAdjacentHTML("beforeend", html);
+    scroll.scrollTop = scroll.scrollHeight;
+  }
+
+  function renderInputZone(){
+    if (readOnly){
+      inputZone.innerHTML =
+        '<div class="gt-locked t-body2"><span>&#9679;</span>'+
+        '<span>Terminal locked — this is a read-only review of a saved session.</span></div>';
+      return;
+    }
+    inputZone.innerHTML =
+      '<div class="gt-inputrow">'+promptHTML()+
+        '<input class="gt-input js-input" spellcheck="false" autocomplete="off" '+
+        'aria-label="Terminal command input" placeholder="type a command, or help">'+
+      '</div>'+
+      '<div class="gt-legend t-body2">'+
+        '<span><kbd>&uarr;</kbd><kbd>&darr;</kbd> history</span>'+
+        '<span><kbd>Enter</kbd> run</span>'+
+        '<span><kbd>clear</kbd> resets the screen</span>'+
+      '</div>';
+    const inp = inputZone.querySelector(".js-input");
+    inp.addEventListener("keydown", onKey);
+  }
+
+  function onKey(e){
+    const inp = e.currentTarget;
+    if (e.key === "Enter"){
+      const raw = inp.value;
+      inp.value = ""; histIdx = -1;
+      if (!raw.trim()) return;
+      const before = state.clearedAt;
+      const lines = execute(state, raw);
+      if (state.clearedAt !== before) renderTerminal();   // `clear`
+      else appendLive(raw, lines);
+      editing = null; editErr = "";
+      renderRail(); renderBadges(); refreshPrompt();
+      return;
+    }
+    if (e.key === "ArrowUp" || e.key === "ArrowDown"){
+      const cmds = state.history.map(h=>h.input);
+      if (!cmds.length) return;
+      e.preventDefault();
+      if (e.key === "ArrowUp") histIdx = histIdx === -1 ? cmds.length-1 : Math.max(0, histIdx-1);
+      else                     histIdx = histIdx === -1 ? -1 : (histIdx+1 >= cmds.length ? -1 : histIdx+1);
+      inp.value = histIdx === -1 ? "" : cmds[histIdx];
+      // put the caret at the end
+      setTimeout(()=>{ inp.selectionStart = inp.selectionEnd = inp.value.length; }, 0);
+    }
+  }
+
+  /* ---------- right rail ---------- */
+
+  function renderBadges(){
+    const b = root.querySelector(".js-badges");
+    const n = state.commits.length;
+    b.innerHTML =
+      (readOnly ? '<span class="gt-badge locked t-body2">Read-only</span>' : "") +
+      (state.initialized
+        ? '<span class="gt-badge good t-body2">'+BRANCH+'</span>'+
+          '<span class="gt-badge t-body2">'+n+' commit'+(n===1?"":"s")+'</span>'
+        : '<span class="gt-badge t-body2">no repo yet</span>');
+  }
+
+  function fileRowHTML(f){
+    const st = statusOf(state,f);
+    const canEdit = !readOnly && !f.deleted;
+    return '<div class="gt-file s-'+st+'">'+
+      '<span class="dot"></span>'+
+      '<span class="name t-mono">'+esc(f.name)+'</span>'+
+      '<span class="lab t-body2">'+STATUS_LABEL[st]+'</span>'+
+      (canEdit ? '<button class="pencil js-edit" data-name="'+esc(f.name)+'" '+
+                 'aria-label="Edit '+esc(f.name)+'" title="Edit contents">&#9998;</button>'
+               : '<span class="pencil-spacer"></span>')+
+    '</div>';
+  }
+  function dirRowHTML(d){
+    return '<div class="gt-file dir">'+
+      '<span class="dot"></span>'+
+      '<span class="name t-mono">'+esc(d)+'/</span>'+
+      '<span class="lab t-body2">directory</span>'+
+      '<span class="pencil-spacer"></span>'+
+    '</div>';
+  }
+
+  function editorHTML(){
+    if (!editing) return "";
+    const isNew = editing.name === null;
+    const f = isNew ? null : getFile(state, editing.name);
+    const content = f ? f.content : "";
+    return '<div class="gt-editor">'+
+      (isNew
+        ? '<div class="row"><input type="text" class="js-newname" placeholder="file name, e.g. utils.py" '+
+          'aria-label="New file name" value=""></div>'
+        : '<div class="row"><span class="t-body1-semi t-mono">'+esc(editing.name)+'</span></div>')+
+      '<textarea class="js-content" maxlength="'+MAX_EDIT_CHARS+'" spellcheck="false" '+
+      'aria-label="File contents">'+esc(content)+'</textarea>'+
+      '<div class="foot">'+
+        '<span class="counter t-body2 js-counter">'+content.length+' / '+MAX_EDIT_CHARS+'</span>'+
+        '<span style="display:flex;gap:8px">'+
+          '<button class="btn btn-sm js-cancel">Cancel</button>'+
+          '<button class="btn btn-sm btn-primary js-save">Save</button>'+
+        '</span>'+
+      '</div>'+
+      (editErr ? '<div class="err t-body2">'+esc(editErr)+'</div>' : "")+
+    '</div>';
+  }
+
+  function renderRail(){
+    const files = sortedFiles(state);
+    const dirs  = state.dirs.slice().sort();
+
+    /* working directory */
+    let wd = '<div class="gt-panel">'+
+      '<div class="gt-panel-head"><span class="t-label">Working directory</span>'+
+        '<span class="gt-count t-body2">'+liveFiles(state).length+' file'+(liveFiles(state).length===1?"":"s")+'</span></div>';
+    if (!state.initialized){
+      wd += '<div class="gt-notice t-body2"><b>Run git init to start.</b> '+
+            'The files below are already here — git just isn\'t watching the folder yet.</div>';
+    }
+    if (!files.length && !dirs.length){
+      wd += '<div class="gt-empty t-body2">Nothing here yet — try <span class="t-mono">touch app.py</span>.</div>';
+    } else {
+      wd += '<div class="gt-files">'+
+        dirs.map(dirRowHTML).join("")+
+        files.map(fileRowHTML).join("")+
+      '</div>';
+    }
+    if (!readOnly) wd += '<button class="gt-newbtn t-body2 js-new">+ New file</button>';
+    if (state.initialized){
+      wd += '<div class="gt-legend2 t-body2">'+
+        '<span><i style="background:var(--error-500)"></i>untracked</span>'+
+        '<span><i style="background:var(--warning-500)"></i>modified</span>'+
+        '<span><i style="background:var(--success-500)"></i>staged</span>'+
+        '<span><i style="background:var(--color-fg-tertiary)"></i>clean</span>'+
+        '<span><i style="background:var(--color-border-strong)"></i>ignored</span>'+
+      '</div>';
+    }
+    wd += editorHTML();
+    wd += '</div>';
+
+    /* staging area */
+    const staged = [];
+    files.forEach(f=>{
+      if (f.deleted){ if (f.committedContent!==null) staged.push(["deleted",f.name]); return; }
+      const head = f.committedContent;
+      const idx  = f.stagedContent === null ? head : f.stagedContent;
+      if (idx !== head) staged.push([head===null?"new file":"modified", f.name]);
+    });
+    let sa = '<div class="gt-panel">'+
+      '<div class="gt-panel-head"><span class="t-label">Staging area</span>'+
+        '<span class="gt-count t-body2">'+staged.length+' staged</span></div>';
+    if (!state.initialized) sa += '<div class="gt-empty t-body2">Run <span class="t-mono">git init</span> to start.</div>';
+    else if (!staged.length) sa += '<div class="gt-empty t-body2">Nothing staged. Use <span class="t-mono">git add &lt;file&gt;</span> to put a snapshot here.</div>';
+    else sa += staged.map(([k,n])=>
+      '<div class="gt-stage-row t-body2"><span class="kind'+(k==="deleted"?" del":"")+'">'+k+'</span>'+
+      '<span class="fname">'+esc(n)+'</span></div>').join("");
+    sa += '</div>';
+
+    /* commit history */
+    let ch = '<div class="gt-panel">'+
+      '<div class="gt-panel-head"><span class="t-label">Commit history</span>'+
+        '<span class="gt-count t-body2">'+state.commits.length+'</span></div>';
+    if (!state.initialized) ch += '<div class="gt-empty t-body2">Run <span class="t-mono">git init</span> to start.</div>';
+    else if (!state.commits.length) ch += '<div class="gt-empty t-body2">No commits yet. Stage something, then <span class="t-mono">git commit -m "..."</span>.</div>';
+    else {
+      ch += '<div class="gt-commits">'+ state.commits.slice().reverse().map((c,i)=>
+        '<div class="gt-commit'+(i===0?" head":"")+'">'+
+          '<div class="top"><span class="hash">'+esc(c.hash)+'</span>'+
+            '<span class="msg t-body1-semi">'+esc(c.message)+'</span></div>'+
+          '<div class="when t-body2">'+esc(fmtDate(c.timestamp))+'</div>'+
+          '<div class="tags">'+c.files.map(n=>'<span class="tag">'+esc(n)+'</span>').join("")+'</div>'+
+        '</div>').join("") + '</div>';
+    }
+    ch += '</div>';
+
+    railEl.innerHTML = wd + sa + ch;
+    wireRail();
+  }
+
+  function wireRail(){
+    railEl.querySelectorAll(".js-edit").forEach(btn=>{
+      btn.onclick = ()=>{ editing = { name: btn.getAttribute("data-name") }; editErr=""; renderRail(); focusEditor(); };
+    });
+    const nb = railEl.querySelector(".js-new");
+    if (nb) nb.onclick = ()=>{ editing = { name:null }; editErr=""; renderRail(); focusEditor(); };
+
+    const cancel = railEl.querySelector(".js-cancel");
+    if (cancel) cancel.onclick = ()=>{ editing=null; editErr=""; renderRail(); };
+
+    const ta = railEl.querySelector(".js-content");
+    const counter = railEl.querySelector(".js-counter");
+    if (ta && counter) ta.oninput = ()=>{
+      counter.textContent = ta.value.length+" / "+MAX_EDIT_CHARS;
+      counter.classList.toggle("over", ta.value.length >= MAX_EDIT_CHARS);
+    };
+
+    const save = railEl.querySelector(".js-save");
+    if (save) save.onclick = ()=>{
+      const content = railEl.querySelector(".js-content").value;
+      let name = editing.name;
+      if (name === null){
+        const raw = (railEl.querySelector(".js-newname").value || "").trim();
+        if (!raw){ editErr = "Give the file a name."; renderRail(); focusEditor(); return; }
+        if (/\s/.test(raw)){ editErr = "File names can't contain spaces in this sandbox."; renderRail(); focusEditor(); return; }
+        const existing = getFile(state, raw);
+        if (existing && !existing.deleted){ editErr = raw+" already exists — edit it from its chip instead."; renderRail(); focusEditor(); return; }
+        name = raw;
+      }
+      applyPanelEdit(name, content, editing.name === null);
+      editing = null; editErr = "";
+      renderRail(); renderBadges();
+    };
+  }
+  function focusEditor(){
+    const target = railEl.querySelector(".js-newname") || railEl.querySelector(".js-content");
+    if (target){ target.focus(); if (target.setSelectionRange) target.setSelectionRange(target.value.length, target.value.length); }
+  }
+
+  // Panel edits change repo state, so they belong in the transcript too —
+  // otherwise a tutor reading commandHistory sees a file change with no cause.
+  // They're recorded with a "(file panel)" prefix so they're never mistaken
+  // for something the learner typed.
+  function applyPanelEdit(name, content, isNew){
+    writeFile(state, name, content, MAX_EDIT_CHARS);
+    const input  = "(file panel) "+(isNew?"create ":"edit ")+name;
+    const output = (isNew?"Created ":"Updated ")+name+" — "+content.length+" chars in the working directory."+
+      (name===".gitignore" ? "\nIgnore patterns now: "+(patternsOf(state).join(", ")||"(none)") : "");
+    const lines = [L("ok",splitLines(output)[0])].concat(splitLines(output).slice(1).map(t=>L("hint",t)));
+    state.history.push({ input, output, kinds: lines.map(l=>l.kind) });
+    appendLive(input, lines);
+  }
+
+  /* ---------- first paint ---------- */
+  renderTerminal();
+  renderInputZone();
+  renderBadges();
+  renderRail();
+
+  return {
+    // The whole session: transcript plus repo. This exact object is a valid
+    // inputs.resume, so a host can round-trip it without transformation.
+    submit(){ return buildSubmission(state); },
+    unmount(){ container.innerHTML = ""; }
+  };
+}
+
+/* ======================================================================
+   HOST HARNESS  (simulates the platform launching this plugin with
+   different inputs — this whole block is OUTSIDE the plugin)
+   ====================================================================== */
+
+const FLASK_APP = "from flask import Flask\n\napp = Flask(__name__)\n\n@app.route(\"/\")\ndef home():\n    return \"hi\"";
+
+// A hand-rolled example of what submit() gives back, used by fixture 7 to show
+// that the output schema is also a valid input.
+const SAMPLE_SUBMISSION = {
+  commandHistory: [
+    { input:"git init", output:"Initialized empty Git repository in /home/learner/project/.git/" },
+    { input:"git add index.html", output:"Staged 1 file: index.html" },
+    { input:"git commit -m \"add landing page\"", output:"[main (root-commit) 3f9a1c2] add landing page\n 1 file changed, 3 insertions(+)" },
+    { input:"echo \"<p>about</p>\" > about.html", output:"Wrote about.html — 14 chars" }
+  ],
+  repoState: {
+    initialized: true,
+    files: [
+      { name:"index.html", content:"<h1>Home</h1>\n<p>welcome</p>\n<a href=\"about.html\">about</a>",
+        status:"clean", stagedContent:"<h1>Home</h1>\n<p>welcome</p>\n<a href=\"about.html\">about</a>",
+        committedContent:"<h1>Home</h1>\n<p>welcome</p>\n<a href=\"about.html\">about</a>" },
+      { name:"about.html", content:"<p>about</p>", status:"untracked" }
+    ],
+    commits: [
+      { hash:"3f9a1c2", message:"add landing page", files:["index.html"], timestamp:"2026-08-20T09:14:00.000Z" }
+    ],
+    gitignorePatterns: []
+  }
+};
+
+const FIXTURES = [
+  {
+    id:"empty", name:"1 · Empty inputs (free exploration)",
+    desc:"inputs = {} — no files supplied. Falls back to the default app.py / README.md / notes.txt project, uninitialized. Type git init, then git status.",
+    inputs: {}
+  },
+  {
+    id:"twofiles", name:"2 · Two untracked files",
+    desc:"The common starting point: a fresh folder with two files in it. git init, then stage one of them and watch the staging area fill up.",
+    inputs: {
+      initialFiles: [
+        { name:"app.py",    content: FLASK_APP,      status:"untracked" },
+        { name:"config.py", content:"DEBUG = True",  status:"untracked" }
+      ]
+    }
+  },
+  {
+    id:"gitignore", name:"3 · .gitignore lesson",
+    desc:'No patterns pre-loaded — the learner writes them. Try: echo ".log" > .gitignore then git status and watch app.log drop out of the untracked list.',
+    inputs: {
+      initialFiles: [
+        { name:"main.py", content:"print('running')", status:"untracked" },
+        { name:"app.log", content:"INFO started",     status:"untracked" }
+      ]
+    }
+  },
+  {
+    id:"preignored", name:"4 · Pre-loaded .gitignore",
+    desc:"gitignorePatterns arrives from the lesson author, so server.log is crossed out before the learner types anything. Try git add server.log to see the ignore warning.",
+    inputs: {
+      gitignorePatterns: [".log", "node_modules/"],
+      initialFiles: [{ name:"server.log", content:"INFO boot", status:"untracked" }]
+    }
+  },
+  {
+    id:"midproject", name:"5 · Mid-project — clean + modified files",
+    desc:"Any file marked clean or modified implies the repo already exists, so the plugin seeds a root commit for those states to be relative to. A modified file with no committedContent gets an empty baseline — git diff then shows the whole file as added.",
+    inputs: {
+      initialFiles: [
+        { name:"README.md", content:"# Shop\n\nOpen daily.", status:"clean" },
+        { name:"index.html", content:"<h1>Shop</h1>\n<p>Open daily</p>", status:"modified",
+          committedContent:"<h1>Shop</h1>" },
+        { name:"draft.txt", content:"not ready", status:"untracked" }
+      ]
+    }
+  },
+  {
+    id:"readonly", name:"6 · Read-only review",
+    desc:"readOnly:true — the terminal input is replaced by a locked banner and the file pencils disappear, but the whole repo state stays readable. For showing a learner's finished work back to them.",
+    inputs: {
+      readOnly: true,
+      initialFiles: [
+        { name:"app.py",   content:"print('done')", status:"clean" },
+        { name:"scratch.txt", content:"wip",        status:"untracked" }
+      ]
+    }
+  },
+  {
+    id:"resume", name:"7 · Resume a prior session",
+    desc:"inputs.resume is a previous submit() payload, restored verbatim: transcript, files, staging state and commits all come back. Click 'Call submit()' after launching — you get the same shape out.",
+    inputs: { resume: SAMPLE_SUBMISSION }
+  },
+  {
+    id:"invalid", name:"8 · Invalid input (error state demo)",
+    desc:'initialFiles has a duplicate name and a status that isn\'t untracked/modified/clean. The plugin renders an inline error list and never crashes.',
+    inputs: {
+      initialFiles: [
+        { name:"a.py", content:"x = 1", status:"untracked" },
+        { name:"a.py", content:"x = 2" },
+        { name:"b.py", content:"y = 3", status:"committed" }
+      ]
+    }
+  },
+  {
+    id:"template", name:"9 · Blank template — start from scratch",
+    desc:"The smallest useful starting point, with every field spelled out. Edit freely and click Launch.",
+    inputs: {
+      initialFiles: [
+        { name:"notes.txt", content:"first line\nsecond line", status:"untracked" }
+      ],
+      gitignorePatterns: [],
+      readOnly: false
+    }
+  }
+];
+
+let currentInstance = null;
+let lastSubmission = null;
+
+function logCallback(tag, payload){
+  const log = document.getElementById("callbackLog");
+  const row = document.createElement("div");
+  row.className = "row" + (tag==="onError" ? " err" : tag==="submit()" ? " ok" : "");
+  row.innerHTML = '<span class="tag t-mono">'+tag+'</span><span class="msg t-mono">'+
+    esc(typeof payload==="string" ? payload : JSON.stringify(payload)) + '</span>';
+  log.prepend(row);
+  while (log.children.length>10) log.removeChild(log.lastChild);
+}
+const hostCallbacks = { onError: (msg)=> logCallback("onError", msg) };
+
+function loadFixtureIntoEditor(id){
+  const fixture = FIXTURES.find(f=>f.id===id);
+  document.getElementById("fixtureDesc").textContent = fixture.desc;
+  document.getElementById("jsonInputs").value = JSON.stringify(fixture.inputs, null, 2);
+  document.getElementById("jsonError").textContent = "";
+  document.getElementById("jsonHint").textContent = "Loaded fixture "+fixture.id+" — edit the JSON, then click Launch.";
+  return fixture;
+}
+function launch(inputs){
+  if (currentInstance) currentInstance.unmount();
+  currentInstance = mount(document.getElementById("pluginHost"), inputs, hostCallbacks);
+}
+function launchFromEditor(){
+  const raw = document.getElementById("jsonInputs").value;
+  let parsed;
+  try { parsed = JSON.parse(raw); }
+  catch(e){
+    document.getElementById("jsonError").textContent = "Invalid JSON — "+e.message;
+    return;
+  }
+  document.getElementById("jsonError").textContent = "";
+  document.getElementById("jsonHint").textContent = "Launched from hand-edited JSON above. Pick a fixture to load a different starting point.";
+  launch(parsed);
+}
+
+const fixtureSelect = document.getElementById("fixtureSelect");
+fixtureSelect.innerHTML = FIXTURES.map(f=>'<option value="'+f.id+'">'+f.name+'</option>').join("");
+fixtureSelect.onchange = ()=> loadFixtureIntoEditor(fixtureSelect.value);
+document.getElementById("btnLaunch").onclick = ()=> launchFromEditor();
+document.getElementById("btnLaunchJson").onclick = ()=> launchFromEditor();
+
+document.getElementById("btnSubmit").onclick = ()=>{
+  if (!currentInstance) return;
+  lastSubmission = currentInstance.submit();
+  if (!lastSubmission){ logCallback("submit()", "null — this mount has nothing to submit"); return; }
+  const rs = lastSubmission.repoState;
+  logCallback("submit()", lastSubmission.commandHistory.length+" commands · "+rs.files.length+
+    " files · "+rs.commits.length+" commits — full JSON loaded into the box above");
+  document.getElementById("jsonInputs").value = JSON.stringify(lastSubmission, null, 2);
+  document.getElementById("jsonHint").textContent =
+    "That's the submission — the same schema goes back in as inputs.resume. Click the button to wrap it.";
+};
+
+document.getElementById("btnResume").onclick = ()=>{
+  if (!lastSubmission){ logCallback("onError", "Call submit() first — there's nothing to resume yet."); return; }
+  const wrapped = { resume: lastSubmission };
+  document.getElementById("jsonInputs").value = JSON.stringify(wrapped, null, 2);
+  document.getElementById("jsonHint").textContent = "Wrapped as { resume: ... } — click Launch to restore the session verbatim.";
+};
+
+fixtureSelect.value = "twofiles";
+loadFixtureIntoEditor("twofiles");
+launchFromEditor();
+</script>
+</body>
+</html>

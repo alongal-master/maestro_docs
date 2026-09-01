@@ -628,7 +628,14 @@
     transition: max-height 0.2s ease;
   }
 
-  .scoreboard-panel[data-open="true"] { max-height: 220px; }
+  .scoreboard-panel[data-open="true"] { max-height: 250px; }
+
+  .scoreboard-caption {
+    margin: 10px 0 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
 
   .lesson-info-panel[data-open="true"] { max-height: 420px; }
 
@@ -813,10 +820,12 @@
           <th>Won</th>
           <th>Tied</th>
           <th>Lost</th>
+          <th>Words</th>
         </tr>
       </thead>
       <tbody id="scoreboardBody"></tbody>
     </table>
+    <p class="scoreboard-caption" id="scoreboardCaption"></p>
   </div>
 </div>
 
@@ -1011,12 +1020,23 @@ PLAN B:
     return { won, tied, lost, missing };
   }
 
+  function wordCount(text) {
+    return text.trim().split(/\s+/).filter(Boolean).length;
+  }
+
+  function average(values) {
+    return values.length ? values.reduce((sum, v) => sum + v, 0) / values.length : undefined;
+  }
+
+  function productionAvgWords() {
+    return average(LESSONS.map((l) => wordCount(l.production)));
+  }
+
   function aggregateFor(key) {
     const rows = LESSONS.map((l) => l.models[key]).filter(Boolean);
     const avg = (scoreKey) => {
       const values = rows.map((r) => r.scores[scoreKey]).filter((v) => v !== undefined);
-      if (!values.length) return undefined;
-      return values.reduce((sum, v) => sum + v, 0) / values.length;
+      return average(values);
     };
     return {
       structure: avg('section_structure'),
@@ -1025,6 +1045,7 @@ PLAN B:
       grounding: avg('retrieval_grounding'),
       instructions: avg('instruction_adherence'),
       preference: avg('pairwise_preference'),
+      words: average(rows.map((r) => wordCount(r.output))),
       tally: tallyFor(key),
     };
   }
@@ -1182,6 +1203,7 @@ PLAN B:
   const scoreboardToggle = document.getElementById('scoreboardToggle');
   const scoreboardPanel = document.getElementById('scoreboardPanel');
   const scoreboardBody = document.getElementById('scoreboardBody');
+  const scoreboardCaption = document.getElementById('scoreboardCaption');
   const lessonInfoToggle = document.getElementById('lessonInfoToggle');
   const lessonInfoPanel = document.getElementById('lessonInfoPanel');
   const lessonInfoInner = document.getElementById('lessonInfoInner');
@@ -1338,9 +1360,13 @@ PLAN B:
         <td>${agg.tally.won}</td>
         <td>${agg.tally.tied}</td>
         <td>${agg.tally.lost}</td>
+        <td>${Math.round(agg.words)}</td>
       </tr>
     `;
   }).join('');
+
+  scoreboardCaption.textContent =
+    `Production (o3) plans average ${Math.round(productionAvgWords())} words for reference.`;
 
   scoreCards.addEventListener('click', (e) => {
     const btn = e.target.closest('.info-toggle');

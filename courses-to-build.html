@@ -21,41 +21,53 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Source Sans 3",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
 h1,h2,h3,h4{font-family:"Bricolage Grotesque","Source Sans 3",Helvetica,Arial,sans-serif;text-wrap:balance;margin:0;line-height:1.15}
-h1{font-size:2.4rem;font-weight:700;letter-spacing:-.01em}
+h1{font-size:1.7rem;font-weight:700;letter-spacing:-.01em}
 h2{font-size:1.5rem;font-weight:700}
-h3{font-size:1.25rem;font-weight:700}
+h3{font-size:1.1rem;font-weight:700}
 h4{font-size:1.05rem;font-weight:700}
 p{margin:0}
 .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:.86em;font-weight:500}
-.wrap{max-width:1000px;margin:0 auto;padding:44px 28px 80px}
-.lede{max-width:66ch;color:var(--muted);font-size:1.05rem;margin-top:.6rem}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 28px 80px}
+.lede{max-width:70ch;color:var(--muted);font-size:.92rem;margin-top:.4rem}
 .eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
-section{margin-top:52px}
+section{margin-top:32px}
 .section-head{display:flex;flex-direction:column;gap:.25rem;margin-bottom:18px}
 .section-head p{max-width:70ch;color:var(--muted)}
 
-.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:28px}
-.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
-.stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:1.9rem;line-height:1.1;font-variant-numeric:tabular-nums}
-.stat span{color:var(--muted);font-size:.9rem}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:18px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:1.25rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.78rem;line-height:1.3;display:block}
 .stat.red b{color:var(--red)}
 
-.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:18px}
-.legend div{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;flex:1 1 260px;font-size:.92rem;color:var(--muted)}
-.legend b{color:var(--ink)}
 
 .chip{display:inline-block;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;line-height:1.5}
 .chip.red{color:var(--red);background:var(--red-bg)}
 .chip.mild{color:var(--mild);background:var(--mild-bg)}
 .chip.check{color:var(--check);background:var(--check-bg)}
-.chip.proj{color:var(--ink);background:transparent;border:1.5px solid var(--ink);text-transform:none;letter-spacing:.01em;font-size:.76rem;font-weight:600}
 
 /* groups */
-.group{margin-top:40px;border-top:3px solid var(--gc,var(--muted));padding-top:16px}
+.group{margin-top:14px;border:1px solid var(--line);border-left:4px solid var(--gc,var(--muted));border-radius:10px;background:var(--panel);padding:0}
+.group summary{list-style:none;cursor:pointer;padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.group summary::-webkit-details-marker{display:none}
+.group summary:focus-visible{outline:2px solid var(--gc);outline-offset:2px;border-radius:10px}
+.group summary h3::before{content:"▸";display:inline-block;width:1em;color:var(--muted);transition:transform .15s}
+.group[open] summary h3::before{transform:rotate(90deg)}
+@media (prefers-reduced-motion: reduce){ .group summary h3::before{transition:none} }
+.peek{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.84rem;color:var(--muted)}
+.peek span{white-space:nowrap}
+.peek .pid{font-family:"IBM Plex Mono",monospace;color:var(--ink);font-size:.8rem}
+.peek .flag::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:5px;vertical-align:1px}
+.group[open] .peek{display:none}
+.group .gbody{padding:0 16px 16px}
+.toggles{display:flex;gap:8px;margin-top:6px}
+.toggles button{font:inherit;font-size:.8rem;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer}
+.toggles button:hover{color:var(--ink)}
+.toggles button:focus-visible{outline:2px solid var(--swe);outline-offset:2px}
 .group.swe{--gc:var(--swe)} .group.biz{--gc:var(--biz)} .group.t1{--gc:var(--t1)}
-.group-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.group-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
 .group-head .gmeta{color:var(--muted);font-size:.88rem;white-space:nowrap}
-.group-why{color:var(--muted);max-width:78ch;font-size:.95rem;margin-bottom:16px}
+.group-why{color:var(--muted);max-width:78ch;font-size:.95rem;margin:4px 0 14px}
 .group-why b{color:var(--ink);font-weight:600}
 .courses{display:flex;flex-direction:column;gap:12px}
 .course{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;grid-template-columns:1fr;gap:10px}
@@ -85,7 +97,7 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
 
 <div class="wrap">
   <p class="eyebrow">Maestro College · course build sprint · prepared 2 Sept 2026</p>
-  <h1 style="margin-top:8px">Courses to build</h1>
+  <h1 style="margin-top:6px">Courses to build</h1>
   <p class="lede">Everything after Term 5 of AI Software Engineering and Term 4 of Business, with Business limited to Track 1 (Entrepreneurship &amp; Innovation). CD101 is already built. Names, credits and topic commitments come from the 2026-27 college catalog, which is binding. Release dates come from the course tech-stack sheet (v2). 21 courses in total, split into 7 author groups, each course with its own issue list.</p>
 
   <div class="strip">
@@ -98,25 +110,24 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
     <div class="stat"><b>3</b><span>platform gaps behind the red flags: project submission, math notation, human-led career work</span></div>
   </div>
 
-  <div class="legend">
-    <div><span class="chip red">Red flag</span><span><b>No good solution today.</b> The catalog promises something Maestro cannot deliver and no workaround is satisfying. Needs a decision before the author starts.</span></div>
-    <div><span class="chip mild">Guideline</span><span><b>Easy workaround.</b> A known pattern handles it. Listed so the author knows what to do, not to raise alarm.</span></div>
-    <div><span class="chip proj">Project submission per catalog</span><span><b>The catalog names a built deliverable</b> the student hands in. Five courses. Today it can only be graded through links pasted into the final exam.</span></div>
-  </div>
-
   <!-- ============ GROUPS ============ -->
   <section>
     <div class="section-head">
       <p class="eyebrow">Courses by author</p>
       <h2>Seven groups, one design problem each</h2>
-      <p>Courses are grouped so each author faces one kind of problem and one subject voice, and so courses a student moves through in sequence are written by the same hand. Lesson counts are template midpoints before reviews and exams.</p>
+      <p>Courses are grouped so each author faces one kind of problem and one subject voice, and so courses a student moves through in sequence are written by the same hand. Open a group to see each course, its catalog commitments, and its issues. A red dot marks a course with a red flag.</p>
+      <div class="toggles"><button type="button" data-open="true">Expand all</button><button type="button" data-open="false">Collapse all</button></div>
     </div>
 
     <!-- G1 -->
-    <div class="group swe">
-      <div class="group-head"><h3>1 · Backend &amp; full-stack projects</h3><span class="gmeta">3 courses · ≈ 100 lessons · first deadline 12 Oct 2026</span></div>
-      <p class="group-why"><b>Why together.</b> All three are two-lane project courses with Flask or React work outside Maestro. One owner applies the pattern first, and the capstone author reuses it. Needs the team's Flask expert.</p>
-      <div class="courses">
+    <details class="group swe">
+      <summary>
+        <div class="group-head"><h3>1 · Backend &amp; full-stack projects</h3><span class="gmeta">3 courses · ≈ 100 lessons · first deadline 12 Oct 2026</span></div>
+        <div class="peek"><span class=""><span class="pid">BE105</span> Advanced Backend Concepts and Microservices</span><span class="flag"><span class="pid">BE106</span> Backend Project</span><span class="flag"><span class="pid">FE103</span> Frontend Integration Project</span></div>
+      </summary>
+      <div class="gbody">
+        <p class="group-why"><b>Why together.</b> All three are two-lane project courses with Flask or React work outside Maestro. One owner applies the pattern first, and the capstone author reuses it. Needs the team's Flask expert.</p>
+        <div class="courses">
 
         <div class="course">
           <div class="chead"><span class="cid">BE105</span><h4>Advanced Backend Concepts and Microservices (Flask)</h4></div>
@@ -130,7 +141,7 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
         </div>
 
         <div class="course flagged">
-          <div class="chead"><span class="cid">BE106</span><h4>Backend Project</h4><span class="chip proj">Project submission per catalog</span></div>
+          <div class="chead"><span class="cid">BE106</span><h4>Backend Project</h4></div>
           <div class="cmeta"><span>SWE project · Term 6</span><span>5 credits · 4 units</span><span>Needed by <b>23 Nov 2026</b></span></div>
           <p class="catalog"><b>Catalog commits to:</b> students build their own end-to-end backend with an authentication system, user management, CRUD operations, Docker deployment, and version control.</p>
           <ul class="issues">
@@ -141,7 +152,7 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
         </div>
 
         <div class="course flagged">
-          <div class="chead"><span class="cid">FE103</span><h4>Frontend Integration Project (Full-stack connectivity, frontend-focused)</h4><span class="chip proj">Project submission per catalog</span></div>
+          <div class="chead"><span class="cid">FE103</span><h4>Frontend Integration Project (Full-stack connectivity, frontend-focused)</h4></div>
           <div class="cmeta"><span>SWE project · Term 8</span><span>5 credits · 4 units</span><span>Needed by <b>3 May 2027</b></span></div>
           <p class="catalog"><b>Catalog commits to:</b> choosing an application domain and scope, user stories and acceptance criteria, wireframes and UI mockups, mapping backend API endpoints and data flows, planning authentication and authorization flows.</p>
           <ul class="issues">
@@ -151,14 +162,19 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
             <li><span class="chip mild">Guideline</span><span><b>React builds run outside.</b> The web editor is for static HTML, CSS and JS drills only.</span></li>
           </ul>
         </div>
+        </div>
       </div>
-    </div>
+    </details>
 
     <!-- G2 -->
-    <div class="group swe">
-      <div class="group-head"><h3>2 · AI sequence</h3><span class="gmeta">4 courses · ≈ 130 lessons · first deadline 4 Jan 2027</span></div>
-      <p class="group-why"><b>Why together.</b> The full prerequisite chain from AI concepts to ML to LLMs to capstone, one voice throughout, and the same VS Code workflow because the Python editor has no ML libraries. AI104 is written last and borrows the Backend group's project convention. AI101's math-notation red flag is shared with the math group, so borrow whatever partial answer that author finds.</p>
-      <div class="courses">
+    <details class="group swe">
+      <summary>
+        <div class="group-head"><h3>2 · AI sequence</h3><span class="gmeta">4 courses · ≈ 130 lessons · first deadline 4 Jan 2027</span></div>
+        <div class="peek"><span class="flag"><span class="pid">AI101</span> Introduction to AI Concepts &amp; Math Foundations</span><span class=""><span class="pid">AI102</span> Fundamentals of Machine Learning</span><span class=""><span class="pid">AI103</span> Prompt Engineering &amp; Working with LLMs</span><span class="flag"><span class="pid">AI104</span> Applied AI Capstone Project</span></div>
+      </summary>
+      <div class="gbody">
+        <p class="group-why"><b>Why together.</b> The full prerequisite chain from AI concepts to ML to LLMs to capstone, one voice throughout, and the same VS Code workflow because the Python editor has no ML libraries. AI104 is written last and borrows the Backend group's project convention. AI101's math-notation red flag is shared with the math group, so borrow whatever partial answer that author finds.</p>
+        <div class="courses">
 
         <div class="course flagged">
           <div class="chead"><span class="cid">AI101</span><h4>Introduction to AI Concepts &amp; Math Foundations</h4></div>
@@ -192,7 +208,7 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
         </div>
 
         <div class="course flagged">
-          <div class="chead"><span class="cid">AI104</span><h4>Applied AI Capstone Project (AI-Powered Full-Stack Application)</h4><span class="chip proj">Project submission per catalog</span></div>
+          <div class="chead"><span class="cid">AI104</span><h4>Applied AI Capstone Project (AI-Powered Full-Stack Application)</h4></div>
           <div class="cmeta"><span>SWE project · Term 9</span><span>5 credits · 4 units</span><span>Needed by <b>7 Jun 2027</b></span></div>
           <p class="catalog"><b>Catalog commits to:</b> defining AI project scope and objectives, technology stack and architecture review, dataset and model selection, roadmap and milestones, integrating the selected AI model or LLM into a full-stack application. Prerequisites AI103, BE106, FE103.</p>
           <ul class="issues">
@@ -202,14 +218,19 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
             <li><span class="chip mild">Guideline</span><span><b>Demo and presentation</b> in Google Slides, outline pasted back, deck on a discussion-board slot.</span></li>
           </ul>
         </div>
+        </div>
       </div>
-    </div>
+    </details>
 
     <!-- G3 -->
-    <div class="group swe">
-      <div class="group-head"><h3>3 · Math foundations</h3><span class="gmeta">2 courses · ≈ 60 lessons · first deadline 1 Feb 2027</span></div>
-      <p class="group-why"><b>Why together.</b> Both hit the same wall: no surface for practising math in notation, and no way to present notation in questions. It is red-flagged on each, and this author owns whatever partial answer is found and shares it with the AI101 author. Spans both programs, which is fine because the problem is the platform, not the subject. Two gen-ed courses is a light load; this author can take a course from group 7.</p>
-      <div class="courses">
+    <details class="group swe">
+      <summary>
+        <div class="group-head"><h3>3 · Math foundations</h3><span class="gmeta">2 courses · ≈ 60 lessons · first deadline 1 Feb 2027</span></div>
+        <div class="peek"><span class="flag"><span class="pid">MATH200</span> College Mathematics</span><span class="flag"><span class="pid">MATH110</span> College Algebra &amp; Trigonometry</span></div>
+      </summary>
+      <div class="gbody">
+        <p class="group-why"><b>Why together.</b> Both hit the same wall: no surface for practising math in notation, and no way to present notation in questions. It is red-flagged on each, and this author owns whatever partial answer is found and shares it with the AI101 author. Spans both programs, which is fine because the problem is the platform, not the subject. Two gen-ed courses is a light load; this author can take a course from group 7.</p>
+        <div class="courses">
 
         <div class="course flagged">
           <div class="chead"><span class="cid">MATH200</span><h4>College Mathematics</h4></div>
@@ -230,17 +251,22 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
             <li><span class="chip mild">Guideline</span><span><b>Business 5-unit shape</b> means about 40 lessons for four catalog topics. Plenty of room; keep each lesson to one concept.</span></li>
           </ul>
         </div>
+        </div>
       </div>
-    </div>
+    </details>
 
     <!-- G4 -->
-    <div class="group swe">
-      <div class="group-head"><h3>4 · Career development</h3><span class="gmeta">3 courses · ≈ 60–100 lessons · first deadline 19 Apr 2027</span></div>
-      <p class="group-why"><b>Why together.</b> One arc from portfolio to offer, continuing the already-built CD101. All three are 3-credit courses with no template in the authoring reference, so one author picks a shape and applies it to all. Light load; this author can absorb a course from group 7 if needed.</p>
-      <div class="courses">
+    <details class="group swe">
+      <summary>
+        <div class="group-head"><h3>4 · Career development</h3><span class="gmeta">3 courses · ≈ 60–100 lessons · first deadline 19 Apr 2027</span></div>
+        <div class="peek"><span class="flag"><span class="pid">CD102</span> AI Project Portfolio Development</span><span class=""><span class="pid">CD103</span> AI Career Strategy and Interview Preparation</span><span class="flag"><span class="pid">CD104</span> AI Career Launch Workshop</span></div>
+      </summary>
+      <div class="gbody">
+        <p class="group-why"><b>Why together.</b> One arc from portfolio to offer, continuing the already-built CD101. All three are 3-credit courses with no template in the authoring reference, so one author picks a shape and applies it to all. Light load; this author can absorb a course from group 7 if needed.</p>
+        <div class="courses">
 
         <div class="course flagged">
-          <div class="chead"><span class="cid">CD102</span><h4>AI Project Portfolio Development</h4><span class="chip proj">Project submission per catalog</span></div>
+          <div class="chead"><span class="cid">CD102</span><h4>AI Project Portfolio Development</h4></div>
           <div class="cmeta"><span>SWE career · Term 8</span><span>3 credits · shape TBD</span><span>Needed by <b>19 Apr 2027</b></span></div>
           <p class="catalog"><b>Catalog commits to:</b> selecting, documenting and presenting AI projects, case studies showing technical skill and business impact, a professional portfolio website, project demonstrations, culminating in a complete portfolio.</p>
           <ul class="issues">
@@ -270,14 +296,19 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
             <li><span class="chip mild">Guideline</span><span><b>What the tutor can do:</b> review applications the student pastes, run practice interviews, track a weekly application plan in canvas-editor. Build the Maestro half around that.</span></li>
           </ul>
         </div>
+        </div>
       </div>
-    </div>
+    </details>
 
     <!-- G5 -->
-    <div class="group biz">
-      <div class="group-head"><h3>5 · Accounting &amp; finance</h3><span class="gmeta">2 courses · ≈ 85 lessons · first deadline 30 Nov 2026</span></div>
-      <p class="group-why"><b>Why together.</b> Both are spreadsheet workbenches with numerically graded answers, both Term 5 Business, both 5-unit courses. Two is a full load. Needs the author comfortable with statements, NPV and capital structure.</p>
-      <div class="courses">
+    <details class="group biz">
+      <summary>
+        <div class="group-head"><h3>5 · Accounting &amp; finance</h3><span class="gmeta">2 courses · ≈ 85 lessons · first deadline 30 Nov 2026</span></div>
+        <div class="peek"><span class=""><span class="pid">FINC160</span> Corporate Finance</span><span class=""><span class="pid">ACCT150</span> Accounting Fundamentals</span></div>
+      </summary>
+      <div class="gbody">
+        <p class="group-why"><b>Why together.</b> Both are spreadsheet workbenches with numerically graded answers, both Term 5 Business, both 5-unit courses. Two is a full load. Needs the author comfortable with statements, NPV and capital structure.</p>
+        <div class="courses">
 
         <div class="course">
           <div class="chead"><span class="cid">FINC160</span><h4>Corporate Finance</h4></div>
@@ -300,14 +331,19 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
             <li><span class="chip mild">Guideline</span><span><b>Numeric grading</b> as in FINC160.</span></li>
           </ul>
         </div>
+        </div>
       </div>
-    </div>
+    </details>
 
     <!-- G6 -->
-    <div class="group t1">
-      <div class="group-head"><h3>6 · Venture building &amp; capstone</h3><span class="gmeta">3 courses · ≈ 125 lessons · first deadline 29 Mar 2027</span></div>
-      <p class="group-why"><b>Why together.</b> Lean startup leads into product development, and the capstone's business plan is the natural end of that venture arc. One owner can carry a single venture scenario through all three and design the capstone's research material.</p>
-      <div class="courses">
+    <details class="group t1">
+      <summary>
+        <div class="group-head"><h3>6 · Venture building &amp; capstone</h3><span class="gmeta">3 courses · ≈ 125 lessons · first deadline 29 Mar 2027</span></div>
+        <div class="peek"><span class=""><span class="pid">ENTR242</span> Startup Development &amp; Lean Methodology</span><span class=""><span class="pid">ENTR243</span> Innovation &amp; Product Development</span><span class="flag"><span class="pid">CAPS300</span> Applied Business Capstone Project</span></div>
+      </summary>
+      <div class="gbody">
+        <p class="group-why"><b>Why together.</b> Lean startup leads into product development, and the capstone's business plan is the natural end of that venture arc. One owner can carry a single venture scenario through all three and design the capstone's research material.</p>
+        <div class="courses">
 
         <div class="course">
           <div class="chead"><span class="cid">ENTR242</span><h4>Startup Development &amp; Lean Methodology</h4></div>
@@ -331,7 +367,7 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
         </div>
 
         <div class="course flagged">
-          <div class="chead"><span class="cid">CAPS300</span><h4>Applied Business Capstone Project</h4><span class="chip proj">Project submission per catalog</span></div>
+          <div class="chead"><span class="cid">CAPS300</span><h4>Applied Business Capstone Project</h4></div>
           <div class="cmeta"><span>Business capstone · Term 9</span><span>6 credits · 5 units</span><span>Needed by <b>6 Dec 2027</b></span></div>
           <p class="catalog"><b>Catalog commits to:</b> integrating all program knowledge through independent research, practical case analysis, and comprehensive business solution development. Prerequisite: every course except PHIL110, PSYC140, COMM180.</p>
           <ul class="issues">
@@ -340,14 +376,19 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
             <li><span class="chip mild">Guideline</span><span><b>Business plan in canvas-editor, presentation in Google Slides,</b> both on discussion-board slots. Write it last so it can reference Track 1 artifacts by description.</span></li>
           </ul>
         </div>
+        </div>
       </div>
-    </div>
+    </details>
 
     <!-- G7 -->
-    <div class="group t1">
-      <div class="group-head"><h3>7 · Strategy, market &amp; e-commerce</h3><span class="gmeta">4 courses · ≈ 165 lessons · first deadline 21 Jun 2027</span></div>
-      <p class="group-why"><b>Why together.</b> Two natural pairs: BUSN302 and BUSN306 share almost identical catalog language on innovative business models, and BUSN303 and BUSN305 are the customer and channel pair. Heaviest load; with an eighth author, split into 302+306 and 303+305.</p>
-      <div class="courses">
+    <details class="group t1">
+      <summary>
+        <div class="group-head"><h3>7 · Strategy, market &amp; e-commerce</h3><span class="gmeta">4 courses · ≈ 165 lessons · first deadline 21 Jun 2027</span></div>
+        <div class="peek"><span class=""><span class="pid">BUSN302</span> Digital Business Strategy</span><span class=""><span class="pid">BUSN306</span> Business Model Innovation &amp; Scaling</span><span class=""><span class="pid">BUSN303</span> Consumer Behavior &amp; Market Research</span><span class=""><span class="pid">BUSN305</span> E-Commerce &amp; Online Retail</span></div>
+      </summary>
+      <div class="gbody">
+        <p class="group-why"><b>Why together.</b> Two natural pairs: BUSN302 and BUSN306 share almost identical catalog language on innovative business models, and BUSN303 and BUSN305 are the customer and channel pair. Heaviest load; with an eighth author, split into 302+306 and 303+305.</p>
+        <div class="courses">
 
         <div class="course">
           <div class="chead"><span class="cid">BUSN302</span><h4>Digital Business Strategy</h4></div>
@@ -388,9 +429,16 @@ footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border
             <li><span class="chip mild">Guideline</span><span><b>Digital logistics and sales strategy</b> are spreadsheet and canvas work; the marketing dashboard can supply funnel evidence.</span></li>
           </ul>
         </div>
+        </div>
       </div>
-    </div>
+    </details>
   </section>
 
+  <script>
+    document.querySelectorAll('.toggles button').forEach(b => b.addEventListener('click', () => {
+      const open = b.dataset.open === 'true';
+      document.querySelectorAll('details.group').forEach(d => { d.open = open; });
+    }));
+  </script>
   <footer>Sources: Maestro College Catalog 2026-27 v1.2.1 (course names, credits, descriptions, prerequisites); courses-dashboard.html (program and term placement); Course tech stack &amp; requirements v2 (release dates); maestro-authoring-reference.md (templates, plugin picker, grading limits). Lesson counts are template midpoints and exclude review and exam lessons.</footer>
 </div>

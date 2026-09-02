@@ -1,0 +1,396 @@
+<title>Courses to Build</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#F3F6F4; --panel:#FFFFFF; --ink:#172026; --muted:#5B6770; --line:#DAE1DD; --soft:#EAF0EC;
+  --swe:#2F5FD8; --biz:#0E8F60; --t1:#D9622E;
+  --red:#B3382E; --red-bg:#F9E9E7; --mild:#8A6A2C; --mild-bg:#F4EEE1; --check:#4B5FA8; --check-bg:#E8EBF7;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121A1C; --panel:#1A2427; --ink:#E7EDEA; --muted:#9BA9A4; --line:#2A3639; --soft:#22302F;
+    --swe:#8AA6FF; --biz:#4FCB98; --t1:#F29066;
+    --red:#F09189; --red-bg:#3A2321; --mild:#D9B77A; --mild-bg:#332C1E; --check:#A3B1F0; --check-bg:#232A47;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121A1C; --panel:#1A2427; --ink:#E7EDEA; --muted:#9BA9A4; --line:#2A3639; --soft:#22302F;
+  --swe:#8AA6FF; --biz:#4FCB98; --t1:#F29066;
+  --red:#F09189; --red-bg:#3A2321; --mild:#D9B77A; --mild-bg:#332C1E; --check:#A3B1F0; --check-bg:#232A47;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Source Sans 3",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:"Bricolage Grotesque","Source Sans 3",Helvetica,Arial,sans-serif;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:2.4rem;font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.25rem;font-weight:700}
+h4{font-size:1.05rem;font-weight:700}
+p{margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:.86em;font-weight:500}
+.wrap{max-width:1000px;margin:0 auto;padding:44px 28px 80px}
+.lede{max-width:66ch;color:var(--muted);font-size:1.05rem;margin-top:.6rem}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+section{margin-top:52px}
+.section-head{display:flex;flex-direction:column;gap:.25rem;margin-bottom:18px}
+.section-head p{max-width:70ch;color:var(--muted)}
+
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:28px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:1.9rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.9rem}
+.stat.red b{color:var(--red)}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:18px}
+.legend div{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;flex:1 1 260px;font-size:.92rem;color:var(--muted)}
+.legend b{color:var(--ink)}
+
+.chip{display:inline-block;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;line-height:1.5}
+.chip.red{color:var(--red);background:var(--red-bg)}
+.chip.mild{color:var(--mild);background:var(--mild-bg)}
+.chip.check{color:var(--check);background:var(--check-bg)}
+.chip.proj{color:var(--ink);background:transparent;border:1.5px solid var(--ink);text-transform:none;letter-spacing:.01em;font-size:.76rem;font-weight:600}
+
+/* groups */
+.group{margin-top:40px;border-top:3px solid var(--gc,var(--muted));padding-top:16px}
+.group.swe{--gc:var(--swe)} .group.biz{--gc:var(--biz)} .group.t1{--gc:var(--t1)}
+.group-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.group-head .gmeta{color:var(--muted);font-size:.88rem;white-space:nowrap}
+.group-why{color:var(--muted);max-width:78ch;font-size:.95rem;margin-bottom:16px}
+.group-why b{color:var(--ink);font-weight:600}
+.courses{display:flex;flex-direction:column;gap:12px}
+.course{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;grid-template-columns:1fr;gap:10px}
+.course.flagged{border-left:4px solid var(--red)}
+.chead{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.chead .cid{font-family:"IBM Plex Mono",monospace;font-weight:500;color:var(--gc,var(--muted));font-size:.95rem}
+.chead h4{flex:1 1 auto}
+.cmeta{display:flex;flex-wrap:wrap;gap:4px 16px;color:var(--muted);font-size:.86rem;font-variant-numeric:tabular-nums}
+.cmeta span b{color:var(--ink);font-weight:600}
+.catalog{font-size:.92rem;color:var(--muted);max-width:80ch}
+.catalog b{color:var(--ink);font-weight:600}
+.issues{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.issues li{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:baseline;font-size:.95rem;max-width:88ch}
+.issues li .chip{justify-self:start}
+.issues li b{font-weight:600}
+
+/* sequence */
+.order{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.wave{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.wave h4{font-size:1rem}
+.wave p{color:var(--muted);font-size:.9rem;margin-top:4px}
+.wave ul{margin:8px 0 0;padding-left:18px;font-size:.94rem}
+.wave li{margin:2px 0}
+footer{margin-top:60px;color:var(--muted);font-size:.86rem;max-width:80ch;border-top:1px solid var(--line);padding-top:16px}
+@media (max-width:600px){ .issues li{grid-template-columns:1fr;gap:2px} h1{font-size:1.9rem} }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Maestro College · course build sprint · prepared 2 Sept 2026</p>
+  <h1 style="margin-top:8px">Courses to build</h1>
+  <p class="lede">Everything after Term 5 of AI Software Engineering and Term 4 of Business, with Business limited to Track 1 (Entrepreneurship &amp; Innovation). CD101 is already built. Names, credits and topic commitments come from the 2026-27 college catalog, which is binding. Release dates come from the course tech-stack sheet (v2). 21 courses in total, split into 7 author groups, each course with its own issue list.</p>
+
+  <div class="strip">
+    <div class="stat"><b>11</b><span>AI Software Engineering, Terms 6–9</span></div>
+    <div class="stat"><b>4</b><span>Business core, Terms 5–9</span></div>
+    <div class="stat"><b>6</b><span>Business Track 1</span></div>
+    <div class="stat"><b>7</b><span>author groups, 2–4 courses each</span></div>
+    <div class="stat red"><b>9</b><span>red flags on 9 courses</span></div>
+    <div class="stat"><b>5</b><span>courses where the catalog requires a submitted project</span></div>
+    <div class="stat"><b>3</b><span>platform gaps behind the red flags: project submission, math notation, human-led career work</span></div>
+  </div>
+
+  <div class="legend">
+    <div><span class="chip red">Red flag</span><span><b>No good solution today.</b> The catalog promises something Maestro cannot deliver and no workaround is satisfying. Needs a decision before the author starts.</span></div>
+    <div><span class="chip mild">Guideline</span><span><b>Easy workaround.</b> A known pattern handles it. Listed so the author knows what to do, not to raise alarm.</span></div>
+    <div><span class="chip proj">Project submission per catalog</span><span><b>The catalog names a built deliverable</b> the student hands in. Five courses. Today it can only be graded through links pasted into the final exam.</span></div>
+  </div>
+
+  <!-- ============ GROUPS ============ -->
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">Courses by author</p>
+      <h2>Seven groups, one design problem each</h2>
+      <p>Courses are grouped so each author faces one kind of problem and one subject voice, and so courses a student moves through in sequence are written by the same hand. Lesson counts are template midpoints before reviews and exams.</p>
+    </div>
+
+    <!-- G1 -->
+    <div class="group swe">
+      <div class="group-head"><h3>1 · Backend &amp; full-stack projects</h3><span class="gmeta">3 courses · ≈ 100 lessons · first deadline 12 Oct 2026</span></div>
+      <p class="group-why"><b>Why together.</b> All three are two-lane project courses with Flask or React work outside Maestro. One owner applies the pattern first, and the capstone author reuses it. Needs the team's Flask expert.</p>
+      <div class="courses">
+
+        <div class="course">
+          <div class="chead"><span class="cid">BE105</span><h4>Advanced Backend Concepts and Microservices (Flask)</h4></div>
+          <div class="cmeta"><span>SWE core · Term 6</span><span>4 credits · 4 units</span><span>Needed by <b>12 Oct 2026</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> organising large-scale Flask projects, configuration management, Flask extensions for scalability, asynchronous programming concepts, asyncio and async/await, microservices.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>Flask is binding.</b> The catalog name says Flask, so the backend is Flask, not FastAPI or Express.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Split by lane.</b> Project layout, extensions and the microservices build go in the project lane in VS Code. asyncio and async/await drills fit the Python editor as topic lessons.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Architecture diagrams</b> are drawn in an external tool the tutor cannot see. The lesson asks the student to describe services and their boundaries in chat; put the diagram on a discussion-board slot.</span></li>
+          </ul>
+        </div>
+
+        <div class="course flagged">
+          <div class="chead"><span class="cid">BE106</span><h4>Backend Project</h4><span class="chip proj">Project submission per catalog</span></div>
+          <div class="cmeta"><span>SWE project · Term 6</span><span>5 credits · 4 units</span><span>Needed by <b>23 Nov 2026</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> students build their own end-to-end backend with an authentication system, user management, CRUD operations, Docker deployment, and version control.</p>
+          <ul class="issues">
+            <li><span class="chip red">Red flag</span><span><b>No project submission.</b> The course is the project, and the only way to grade it today is a link pasted into an open-text question in the final exam, checked manually by an instructor. That is a workaround, not a solution: there is no place to state the project requirements clearly, and submitting a build inside a timed exam event is confusing for the student. Until a submission feature exists, write the requirements into a dedicated project lesson, and make the submission a repo link plus a demo video with the live URL optional.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Docker, git and deploy</b> are taught as topic lessons and done in the project lane, deploying to Hugging Face Spaces or Render (no card needed). The last project step is recording the demo: container start, deployed URL responding, short code walkthrough. During lessons the tutor cannot open links, so the student pastes container logs, git log output, or the curl response; the repo and the video only reach a human, through a discussion-board slot or the final.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Mostly project lane.</b> Keep a few topic lessons per unit (auth review, Docker basics, git workflow) so reviews have something to test, and restate the project state in every step.</span></li>
+          </ul>
+        </div>
+
+        <div class="course flagged">
+          <div class="chead"><span class="cid">FE103</span><h4>Frontend Integration Project (Full-stack connectivity, frontend-focused)</h4><span class="chip proj">Project submission per catalog</span></div>
+          <div class="cmeta"><span>SWE project · Term 8</span><span>5 credits · 4 units</span><span>Needed by <b>3 May 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> choosing an application domain and scope, user stories and acceptance criteria, wireframes and UI mockups, mapping backend API endpoints and data flows, planning authentication and authorization flows.</p>
+          <ul class="issues">
+            <li><span class="chip red">Red flag</span><span><b>No project submission.</b> Same as BE106: links in the final exam are the only route today, with no clear place for requirements and an awkward fit inside a timed exam. Submission is repo plus demo video; the frontend deploys to Vercel or Netlify, and the video shows it calling the live backend.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>A real backend is binding.</b> The React app must talk to a live API, not mock data. The tutor will not remember the student's BE106 backend, so ship a reference API contract in the syllabus that any student can build against, and let students substitute their own.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Wireframes and mockups</b> go in an external tool. Describe them in chat, and give the wireframe a discussion-board slot so an instructor sees it.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>React builds run outside.</b> The web editor is for static HTML, CSS and JS drills only.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- G2 -->
+    <div class="group swe">
+      <div class="group-head"><h3>2 · AI sequence</h3><span class="gmeta">4 courses · ≈ 130 lessons · first deadline 4 Jan 2027</span></div>
+      <p class="group-why"><b>Why together.</b> The full prerequisite chain from AI concepts to ML to LLMs to capstone, one voice throughout, and the same VS Code workflow because the Python editor has no ML libraries. AI104 is written last and borrows the Backend group's project convention. AI101's math-notation red flag is shared with the math group, so borrow whatever partial answer that author finds.</p>
+      <div class="courses">
+
+        <div class="course flagged">
+          <div class="chead"><span class="cid">AI101</span><h4>Introduction to AI Concepts &amp; Math Foundations</h4></div>
+          <div class="cmeta"><span>SWE core · Term 7</span><span>4 credits · 4 units</span><span>Needed by <b>4 Jan 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> what artificial intelligence is, a brief history, symbolic vs statistical AI, general vs narrow AI, ethics and societal impacts, plus the math foundations in the name.</p>
+          <ul class="issues">
+            <li><span class="chip red">Red flag</span><span><b>Math practice and math in questions.</b> There is no surface for the student to work a problem in notation, and review and exam questions are plain text with no way to present vectors, matrices or probability formulas properly. Whether the chat renders LaTeX is unverified. Tutor illustrations cover graphs, and the Python editor handles numeric demos, but the notation gap has no good answer today.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Numeric answers</b> are MCQ or open text. Write rubrics that score method and final value separately. Coordinate the notation approach with the math group.</span></li>
+          </ul>
+        </div>
+
+        <div class="course">
+          <div class="chead"><span class="cid">AI102</span><h4>Fundamentals of Machine Learning</h4></div>
+          <div class="cmeta"><span>SWE core · Term 7</span><span>4 credits · 4 units</span><span>Needed by <b>15 Feb 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> what machine learning is, types of ML, the ML workflow, defining and framing ML problems, data collection and understanding.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>The Python editor has no numpy, pandas or scikit-learn.</b> All hands-on ML is external learning in VS Code, in the project lane. The editor is for pure-Python drills only.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Charts and datasets live outside.</b> The editor returns console output only. Students print summaries and paste them; the tutor draws the illustration. Supply datasets by URL in teaching instructions.</span></li>
+          </ul>
+        </div>
+
+        <div class="course">
+          <div class="chead"><span class="cid">AI103</span><h4>Prompt Engineering &amp; Working with LLMs</h4></div>
+          <div class="cmeta"><span>SWE core · Term 8</span><span>4 credits · 4 units</span><span>Needed by <b>22 Mar 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> what LLMs are, evolution of language models, transformer architecture basics, pretraining, fine-tuning and transfer learning, overview of major LLMs, prompt engineering.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>Students use free-tier API keys, mainly Google Gemini and Groq.</b> The syllabus is shared by the whole cohort, so no key can live in it; each student creates their own free account and key. Both providers offer an OpenAI-compatible endpoint, so one request shape covers both, and free-tier rate limits are enough for coursework. Re-verify the free tiers before shipping, and name Ollama as the offline fallback.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Prompting technique needs no key.</b> The tutor role-plays a model in chat. Only the parameter experiments (temperature, system prompts, structured output) need real calls, done in VS Code.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Open the API unit with a setup lesson:</b> create the Gemini or Groq account, generate the key, store it in an environment variable, make one call. Add a tutor instruction to refuse pasted keys and tell the student to rotate them.</span></li>
+          </ul>
+        </div>
+
+        <div class="course flagged">
+          <div class="chead"><span class="cid">AI104</span><h4>Applied AI Capstone Project (AI-Powered Full-Stack Application)</h4><span class="chip proj">Project submission per catalog</span></div>
+          <div class="cmeta"><span>SWE project · Term 9</span><span>5 credits · 4 units</span><span>Needed by <b>7 Jun 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> defining AI project scope and objectives, technology stack and architecture review, dataset and model selection, roadmap and milestones, integrating the selected AI model or LLM into a full-stack application. Prerequisites AI103, BE106, FE103.</p>
+          <ul class="issues">
+            <li><span class="chip red">Red flag</span><span><b>No project submission.</b> Same as BE106 and FE103. The capstone is the whole course, so the timed-exam link workaround fits worst here. Submission is repo plus demo video showing the model or LLM integration working in the deployed app; students already recorded demos in CD102.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>API key:</b> the free-tier Gemini or Groq key from AI103, set up again in the capstone's first project step.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Write it last.</b> It reuses the BE106 and FE103 project conventions and the AI103 setup lesson. The catalog name binds it to a full-stack app with an integrated model. Model work is in VS Code, since the Python editor has no ML libraries.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Demo and presentation</b> in Google Slides, outline pasted back, deck on a discussion-board slot.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- G3 -->
+    <div class="group swe">
+      <div class="group-head"><h3>3 · Math foundations</h3><span class="gmeta">2 courses · ≈ 60 lessons · first deadline 1 Feb 2027</span></div>
+      <p class="group-why"><b>Why together.</b> Both hit the same wall: no surface for practising math in notation, and no way to present notation in questions. It is red-flagged on each, and this author owns whatever partial answer is found and shares it with the AI101 author. Spans both programs, which is fine because the problem is the platform, not the subject. Two gen-ed courses is a light load; this author can take a course from group 7.</p>
+      <div class="courses">
+
+        <div class="course flagged">
+          <div class="chead"><span class="cid">MATH200</span><h4>College Mathematics</h4></div>
+          <div class="cmeta"><span>SWE gen-ed · Term 7</span><span>4 credits · 2 units</span><span>Needed by <b>1 Feb 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> whole numbers, fractions, mixed numbers, decimals, ratio, rate, proportions, percentages, measurements, introduction to probability and statistics.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>Ten catalog topics in a 2-unit shape</b> (about 17–20 lessons). Every one must map to an outcome, so plan roughly two lessons per topic and use Challenge lessons to combine them.</span></li>
+            <li><span class="chip red">Red flag</span><span><b>Math practice and math in questions.</b> Fractions, mixed numbers and proportions need to be written and read as notation, and neither the practice surface nor the question format supports that today. The spreadsheet plugin covers percentages, rates and basic statistics, which limits the damage but does not close the gap.</span></li>
+          </ul>
+        </div>
+
+        <div class="course flagged">
+          <div class="chead"><span class="cid">MATH110</span><h4>College Algebra &amp; Trigonometry</h4></div>
+          <div class="cmeta"><span>Business gen-ed · Term 6</span><span>6 credits · 5 units</span><span>Needed by <b>22 Feb 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> algebra, trigonometry, functions, and business applications essential for quantitative analysis.</p>
+          <ul class="issues">
+            <li><span class="chip red">Red flag</span><span><b>Math practice and math in questions,</b> and this is the course it hurts most. Trig identities, function notation and graphs cannot be worked by the student or presented in a question with today's surfaces. Lean on the business-applications angle, where the spreadsheet carries the work, but the core algebra and trigonometry has no good home.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Business 5-unit shape</b> means about 40 lessons for four catalog topics. Plenty of room; keep each lesson to one concept.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- G4 -->
+    <div class="group swe">
+      <div class="group-head"><h3>4 · Career development</h3><span class="gmeta">3 courses · ≈ 60–100 lessons · first deadline 19 Apr 2027</span></div>
+      <p class="group-why"><b>Why together.</b> One arc from portfolio to offer, continuing the already-built CD101. All three are 3-credit courses with no template in the authoring reference, so one author picks a shape and applies it to all. Light load; this author can absorb a course from group 7 if needed.</p>
+      <div class="courses">
+
+        <div class="course flagged">
+          <div class="chead"><span class="cid">CD102</span><h4>AI Project Portfolio Development</h4><span class="chip proj">Project submission per catalog</span></div>
+          <div class="cmeta"><span>SWE career · Term 8</span><span>3 credits · shape TBD</span><span>Needed by <b>19 Apr 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> selecting, documenting and presenting AI projects, case studies showing technical skill and business impact, a professional portfolio website, project demonstrations, culminating in a complete portfolio.</p>
+          <ul class="issues">
+            <li><span class="chip red">Red flag</span><span><b>No project submission.</b> The catalog says the course "culminates in a complete portfolio", so the portfolio is the deliverable, and today it can only be graded as a link pasted into the final exam. Case-study write-ups are canvas-editor work assessed as open text; the portfolio site is one page in the web editor, deployed outside if the student wants, and its link also goes on a discussion-board slot.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>The tutor does not remember the student's earlier projects.</b> Each lesson asks the student to describe the project they are documenting before working on it.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Demonstrations</b> are screen-recorded demo videos, scripted in Google Slides and coached from the pasted outline. This is where students learn the recording format that AI104 and CAPS300 submit.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Pick the 3-credit shape</b> (full 4-unit or reduced) before writing, and use it for CD103 and CD104 too.</span></li>
+          </ul>
+        </div>
+
+        <div class="course">
+          <div class="chead"><span class="cid">CD103</span><h4>AI Career Strategy and Interview Preparation</h4></div>
+          <div class="cmeta"><span>SWE career · Term 9</span><span>3 credits · shape TBD</span><span>Not yet scheduled</span></div>
+          <p class="catalog"><b>Catalog commits to:</b> job search strategies for AI roles, tailoring applications, technical and behavioral interview preparation, salary negotiation, mock interviews, coding challenges, a personalised career roadmap and interview strategy.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>Mock interviews</b> are tutor role-play in chat, text only. Coding challenges run in the Python editor. Both work well; name the interview format in teaching instructions so the tutor stays in role.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Career roadmap and tailored applications</b> are canvas-editor documents. The student pastes the job posting into the lesson since the tutor cannot browse.</span></li>
+          </ul>
+        </div>
+
+        <div class="course flagged">
+          <div class="chead"><span class="cid">CD104</span><h4>AI Career Launch Workshop</h4></div>
+          <div class="cmeta"><span>SWE career · Term 9</span><span>3 credits · shape TBD</span><span>Not yet scheduled</span></div>
+          <p class="catalog"><b>Catalog commits to:</b> guided hands-on job search, actively applying to AI positions with instructor guidance, real-time interview feedback sessions, networking events and industry connections, personalised coaching, a supported transition to employment.</p>
+          <ul class="issues">
+            <li><span class="chip red">Red flag</span><span><b>The catalog promises humans and events.</b> Instructor guidance, live feedback, networking events and personal coaching are not things a chat tutor can deliver, and a workshop about applying to jobs has almost no mastery outcomes to write. Either run a human-led component alongside and say so in the syllabus, or amend the catalog. Do not start this course until that is decided.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>What the tutor can do:</b> review applications the student pastes, run practice interviews, track a weekly application plan in canvas-editor. Build the Maestro half around that.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- G5 -->
+    <div class="group biz">
+      <div class="group-head"><h3>5 · Accounting &amp; finance</h3><span class="gmeta">2 courses · ≈ 85 lessons · first deadline 30 Nov 2026</span></div>
+      <p class="group-why"><b>Why together.</b> Both are spreadsheet workbenches with numerically graded answers, both Term 5 Business, both 5-unit courses. Two is a full load. Needs the author comfortable with statements, NPV and capital structure.</p>
+      <div class="courses">
+
+        <div class="course">
+          <div class="chead"><span class="cid">FINC160</span><h4>Corporate Finance</h4></div>
+          <div class="cmeta"><span>Business core · Term 5</span><span>6 credits · 5 units</span><span>Needed by <b>30 Nov 2026</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> investment analysis, financial planning, capital structure, risk management, advanced financial modeling and analysis tools.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>The spreadsheet plugin has NPV, IRR and PMT,</b> so investment analysis and financial planning stay inside the platform.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>"Advanced modeling tools"</b> is a catalog topic with no integration. Teach the modeling on the spreadsheet plugin and cover the tools as concepts.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Numeric grading:</b> MCQ for values, open-text rubrics scoring method and result separately.</span></li>
+          </ul>
+        </div>
+
+        <div class="course">
+          <div class="chead"><span class="cid">ACCT150</span><h4>Accounting Fundamentals</h4></div>
+          <div class="cmeta"><span>Business core · Term 5</span><span>6 credits · 5 units</span><span>Needed by <b>4 Jan 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> financial statement preparation, accounting cycles, budgeting principles, cost accounting, automated bookkeeping and reporting tools.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>The spreadsheet is the ledger.</b> Journals, T-accounts, trial balances and statements all fit the grid, and the tutor can seed a starting template at runtime.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>"Automated bookkeeping tools"</b> has no integration. Teach what such tools automate and have the student do the same steps in the grid.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Numeric grading</b> as in FINC160.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- G6 -->
+    <div class="group t1">
+      <div class="group-head"><h3>6 · Venture building &amp; capstone</h3><span class="gmeta">3 courses · ≈ 125 lessons · first deadline 29 Mar 2027</span></div>
+      <p class="group-why"><b>Why together.</b> Lean startup leads into product development, and the capstone's business plan is the natural end of that venture arc. One owner can carry a single venture scenario through all three and design the capstone's research material.</p>
+      <div class="courses">
+
+        <div class="course">
+          <div class="chead"><span class="cid">ENTR242</span><h4>Startup Development &amp; Lean Methodology</h4></div>
+          <div class="cmeta"><span>Track 1 · Term 6</span><span>6 credits · 5 units</span><span>Needed by <b>29 Mar 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> entrepreneurship principles, Lean Startup implementation, idea validation, rapid product prototyping.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>It comes first in Track 1.</b> It is the prerequisite of ENTR243, so the Welcome lesson places it as the track's opening course. The dashboard currently shows a different order; use this one.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Lean canvas</b> is a table in canvas-editor. <b>Prototypes</b> are a static page in the web editor or an external mock-up, with a discussion-board slot for feedback.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>If one venture idea runs through the course,</b> restate it in each lesson's instructions and fix the structure (segments, value proposition) while letting the student pick the idea.</span></li>
+          </ul>
+        </div>
+
+        <div class="course">
+          <div class="chead"><span class="cid">ENTR243</span><h4>Innovation &amp; Product Development</h4></div>
+          <div class="cmeta"><span>Track 1 · Term 7</span><span>6 credits · 5 units</span><span>Needed by <b>17 May 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> innovation processes, new product development, R&amp;D management, organisational creativity, product lifecycle management. Prerequisite ENTR242.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>Process and lifecycle maps</b> are drawn externally and described in chat; canvas-editor tables work for stage-gate plans.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Do not assume the ENTR242 venture survives.</b> If the course continues it, restate the venture in the unit instructions and let the student re-supply the details.</span></li>
+          </ul>
+        </div>
+
+        <div class="course flagged">
+          <div class="chead"><span class="cid">CAPS300</span><h4>Applied Business Capstone Project</h4><span class="chip proj">Project submission per catalog</span></div>
+          <div class="cmeta"><span>Business capstone · Term 9</span><span>6 credits · 5 units</span><span>Needed by <b>6 Dec 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> integrating all program knowledge through independent research, practical case analysis, and comprehensive business solution development. Prerequisite: every course except PHIL110, PSYC140, COMM180.</p>
+          <ul class="issues">
+            <li><span class="chip red">Red flag</span><span><b>No project submission.</b> The business plan and deck can only be graded as a link pasted into the final exam and checked manually. No clear place for requirements, and a capstone deliverable does not belong inside a timed exam event. Submission is the plan document, the deck, and a recorded presentation, as links.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>"Independent research" happens without the tutor.</b> Supply the case data inside the syllabus or as additional materials, and have the student paste outside sources they use.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Business plan in canvas-editor, presentation in Google Slides,</b> both on discussion-board slots. Write it last so it can reference Track 1 artifacts by description.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- G7 -->
+    <div class="group t1">
+      <div class="group-head"><h3>7 · Strategy, market &amp; e-commerce</h3><span class="gmeta">4 courses · ≈ 165 lessons · first deadline 21 Jun 2027</span></div>
+      <p class="group-why"><b>Why together.</b> Two natural pairs: BUSN302 and BUSN306 share almost identical catalog language on innovative business models, and BUSN303 and BUSN305 are the customer and channel pair. Heaviest load; with an eighth author, split into 302+306 and 303+305.</p>
+      <div class="courses">
+
+        <div class="course">
+          <div class="chead"><span class="cid">BUSN302</span><h4>Digital Business Strategy</h4></div>
+          <div class="cmeta"><span>Track 1 · Term 7</span><span>6 credits · 5 units</span><span>Needed by <b>21 Jun 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> digital transformation, innovative business models, strategies for dealing with technological change.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>Business model canvases</b> as tables in canvas-editor, or an external diagram described in chat.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Differentiate from BUSN306 up front:</b> 302 is transformation and responding to change, 306 is scaling and growth. Check both catalog topic lists together so neither course drops a topic.</span></li>
+          </ul>
+        </div>
+
+        <div class="course">
+          <div class="chead"><span class="cid">BUSN306</span><h4>Business Model Innovation &amp; Scaling</h4></div>
+          <div class="cmeta"><span>Track 1 · Term 9</span><span>6 credits · 5 units</span><span>Needed by <b>1 Nov 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> developing innovative business models, scaling strategies, managing growth and expansion, competitive advantage, market opportunity analysis, leading organisational transformation.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>Scaling numbers</b> (unit economics, growth scenarios) belong in the spreadsheet plugin; strategy documents in canvas-editor.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Overlap with BUSN302</b> as noted there. Same author, deliberate split.</span></li>
+          </ul>
+        </div>
+
+        <div class="course">
+          <div class="chead"><span class="cid">BUSN303</span><h4>Consumer Behavior &amp; Market Research</h4></div>
+          <div class="cmeta"><span>Track 1 · Term 8</span><span>6 credits · 5 units</span><span>Needed by <b>9 Aug 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> consumer psychology, market research methods, target segments, purchasing behavior analysis for marketing strategy.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>Surveys and interviews can be designed but never fielded.</b> Draft instruments in canvas-editor, then supply sample response data in the spreadsheet plugin for the analysis lessons.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Segmentation and behavior analysis</b> fit the spreadsheet; the marketing dashboard plugin can put controlled evidence in front of the student for interpretation lessons.</span></li>
+          </ul>
+        </div>
+
+        <div class="course">
+          <div class="chead"><span class="cid">BUSN305</span><h4>E-Commerce &amp; Online Retail</h4></div>
+          <div class="cmeta"><span>Track 1 · Term 8</span><span>6 credits · 5 units</span><span>Needed by <b>13 Sep 2027</b></span></div>
+          <p class="catalog"><b>Catalog commits to:</b> e-commerce platforms, user experience design, digital logistics, online sales strategies, comprehensive online retail management.</p>
+          <ul class="issues">
+            <li><span class="chip mild">Guideline</span><span><b>"E-commerce platforms" with no Shopify.</b> Teach platform concepts, and mock a storefront page in the web editor for the UX lessons.</span></li>
+            <li><span class="chip mild">Guideline</span><span><b>Digital logistics and sales strategy</b> are spreadsheet and canvas work; the marketing dashboard can supply funnel evidence.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Sources: Maestro College Catalog 2026-27 v1.2.1 (course names, credits, descriptions, prerequisites); courses-dashboard.html (program and term placement); Course tech stack &amp; requirements v2 (release dates); maestro-authoring-reference.md (templates, plugin picker, grading limits). Lesson counts are template midpoints and exclude review and exam lessons.</footer>
+</div>

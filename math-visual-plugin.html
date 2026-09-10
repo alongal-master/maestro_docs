@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>math-visual plugin — input playground</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph@1.13.3/distrib/jsxgraph.css">
+<script src="https://cdn.jsdelivr.net/npm/jsxgraph@1.13.3/distrib/jsxgraphcore.js"></script>
+<style>
+/* ==========================================================================
+   HOST-PROVIDED DESIGN TOKENS (identical values to the marketing-analytics and
+   git-terminal builds — unchanged so all three plugins render the same)
+   ========================================================================== */
+:root{
+  --color-bg:#f4f6fa; --color-bg-subtle:#eceef2;
+  --color-surface:#ffffff; --color-surface-raised:#ffffff;
+  --color-fg:#111827; --color-fg-secondary:#5b6472; --color-fg-tertiary:#8a94a3; --color-fg-disabled:#b6bcc6;
+  --color-border:#e3e6ec; --color-border-strong:#c7cdd8; --color-border-input:#c7cdd8;
+  --success-500:#0f8a5f; --error-500:#c0392b; --warning-500:#b45309;
+  --error-100:#fbe7e5; --error-600:#a5301f;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px; --space-8:32px; --space-12:48px;
+  --radius-md:8px; --radius-lg:12px; --radius-xl:16px; --radius-full:9999px;
+  --shadow-sm: 0 1px 2px rgba(17,24,39,.06);
+
+  /* ---- plugin-local additions --------------------------------------------
+     The host token set has no categorical data palette, and a math figure needs
+     one that stays distinguishable when several curves overlap. Declared once
+     here so the plugin body only ever names tokens; the JS mirror of this map
+     is VIZ_COLORS below, which is the single place a hex is written twice. ---- */
+  --viz-primary:#2f5bea; --viz-secondary:#0f8a5f; --viz-accent:#d6336c;
+  --viz-violet:#7c3aed; --viz-amber:#b45309; --viz-teal:#0e7490;
+  --viz-muted:#8a94a3; --viz-error:#c0392b;
+  --viz-fill:rgba(47,91,234,.16); --viz-grid:#e8ebf1;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-bg);color:var(--color-fg);
+     font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;}
+
+.t-h3{font-size:20px;font-weight:700;letter-spacing:-.01em;margin:0}
+.t-h4{font-size:17px;font-weight:700;letter-spacing:-.01em;margin:0}
+.t-h5{font-size:14.5px;font-weight:650;margin:0}
+.t-body1{font-size:14px;font-weight:400}
+.t-body1-semi{font-size:14px;font-weight:650}
+.t-body2{font-size:12.5px;font-weight:400}
+.t-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.t-mono{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px}
+
+/* ---- host chrome ---- */
+.wrap{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
+.host-banner{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.host-banner .t-body2{color:var(--color-fg-secondary);max-width:700px}
+.host-tag{display:inline-block;background:var(--color-bg-subtle);color:var(--color-fg-secondary);
+  border-radius:var(--radius-full);padding:3px 10px;margin-left:var(--space-2);white-space:nowrap}
+
+.host-section{border:1px dashed var(--color-border-strong);border-radius:var(--radius-xl);
+  padding:var(--space-4);margin-top:var(--space-6);background:#fbfcfe}
+.host-section-label{display:flex;align-items:center;gap:var(--space-2);color:var(--color-fg-tertiary);margin-bottom:var(--space-3)}
+.host-section-label .dot{width:6px;height:6px;border-radius:99px;background:var(--color-fg-tertiary)}
+.host-section-label .spacer{flex:1}
+
+.fixture-row{display:flex;gap:var(--space-3);align-items:flex-end;flex-wrap:wrap}
+.field label{display:block;margin-bottom:6px;color:var(--color-fg-secondary)}
+select, button, textarea{font:inherit}
+select{border:1px solid var(--color-border-input);border-radius:var(--radius-md);padding:8px 10px;
+  background:var(--color-surface);color:var(--color-fg);width:min(320px,100%)}
+.btn{border:1px solid var(--color-border-strong);background:var(--color-surface);color:var(--color-fg);
+  border-radius:var(--radius-full);padding:9px 16px;cursor:pointer}
+.btn:hover{background:var(--color-bg-subtle)}
+.btn-primary{background:var(--color-fg);color:#fff;border-color:var(--color-fg)}
+.btn-primary:hover{opacity:.88}
+.btn-sm{padding:5px 12px;font-size:12.5px}
+.btn.active{background:var(--color-fg);color:#fff;border-color:var(--color-fg)}
+.fixture-desc{color:var(--color-fg-secondary);margin-top:var(--space-2);max-width:820px}
+
+.json-box{margin-top:var(--space-4);background:var(--color-fg);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);
+  color:#d7e0f5;max-height:420px;overflow:auto}
+.json-box .t-label{color:#93a3c9;display:block;margin-bottom:6px}
+.json-editor{width:100%;min-height:260px;resize:vertical;background:transparent;color:#d7e0f5;
+  border:1px solid #3a4562;border-radius:var(--radius-md);padding:8px;font-family:"SF Mono",Menlo,Consolas,monospace;
+  font-size:12px;line-height:1.5}
+.json-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:var(--space-3)}
+.json-error{color:#ff9b8a}
+.json-hint{color:#93a3c9}
+
+.callback-log{margin-top:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-lg);
+  background:var(--color-surface);max-height:150px;overflow:auto}
+.callback-log .row{display:flex;gap:var(--space-2);padding:7px 12px;border-bottom:1px solid var(--color-border)}
+.callback-log .row:last-child{border-bottom:none}
+.callback-log .tag{color:var(--color-fg-tertiary);white-space:nowrap}
+.callback-log .msg{color:var(--color-fg-secondary);word-break:break-word}
+.callback-log .row.err .tag{color:var(--error-600)}
+
+/* ==========================================================================
+   MOCK CHAT TRANSCRIPT
+   The surface that matters for this plugin. It does not open in the right
+   panel and there is no toggle that reveals it — it is rendered inline, in
+   the body of a tutor message, at whatever width the chat column happens to
+   be. The width toggle exists so that constraint is testable here.
+   ========================================================================== */
+.chat-stage{display:flex;justify-content:center;background:var(--color-bg-subtle);
+  border-radius:var(--radius-xl);padding:var(--space-6) var(--space-4);margin-top:var(--space-3);
+  border:1px solid var(--color-border)}
+.chat-col{width:720px;max-width:100%;transition:width .18s ease}
+.chat-col.narrow{width:380px}
+
+.msg{display:flex;gap:var(--space-3);align-items:flex-start}
+.avatar{width:28px;height:28px;border-radius:var(--radius-full);flex:none;margin-top:2px;
+  background:var(--color-fg);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;letter-spacing:.02em}
+.msg-body{flex:1;min-width:0}
+.msg-who{color:var(--color-fg-tertiary);margin-bottom:var(--space-2)}
+.msg-body p{margin:0 0 var(--space-3)}
+.msg-body p:last-child{margin-bottom:0}
+.msg-body ol{margin:var(--space-2) 0 0;padding-left:20px}
+.msg-body li{margin-bottom:5px}
+
+/* ==========================================================================
+   THE PLUGIN — everything below .mv- is what actually ships
+   ========================================================================== */
+.mv{border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);
+  overflow:hidden;margin:var(--space-3) 0;box-shadow:var(--shadow-sm)}
+.mv-head{padding:10px var(--space-4) 8px;border-bottom:1px solid var(--color-border)}
+.mv-title{margin:0}
+.mv-caption{color:var(--color-fg-secondary);margin-top:2px}
+
+.mv-boardwrap{position:relative;background:var(--color-surface)}
+.mv-board{width:100%;background:var(--color-surface);touch-action:pan-y}
+/* JSXGraph paints its own focus ring; suppress the default so the figure
+   doesn't sprout a black box inside a chat message. */
+.mv-board:focus{outline:none}
+.mv-board .JXGtext{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif !important}
+
+.mv-params{display:flex;flex-wrap:wrap;gap:var(--space-3) var(--space-4);
+  padding:10px var(--space-4);border-top:1px solid var(--color-border);background:#fbfcfe}
+.mv-param{display:flex;align-items:center;gap:var(--space-2);flex:1 1 210px;min-width:0}
+.mv-param-label{color:var(--color-fg-secondary);white-space:nowrap;flex:none}
+.mv-param input[type=range]{flex:1;min-width:70px;accent-color:var(--viz-primary)}
+.mv-param-val{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px;font-weight:650;
+  min-width:38px;text-align:right;flex:none;font-variant-numeric:tabular-nums}
+
+.mv-readouts{display:flex;flex-wrap:wrap;gap:var(--space-2);padding:10px var(--space-4);
+  border-top:1px solid var(--color-border);background:#fbfcfe}
+.mv-readout{display:flex;align-items:baseline;gap:6px;background:var(--color-surface);
+  border:1px solid var(--color-border);border-radius:var(--radius-md);padding:4px 10px}
+.mv-readout .k{color:var(--color-fg-tertiary);font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.mv-readout .v{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;font-weight:650;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.mv-legend{display:flex;flex-wrap:wrap;gap:var(--space-2) var(--space-4);padding:8px var(--space-4);
+  border-top:1px solid var(--color-border)}
+.mv-legend .item{display:flex;align-items:center;gap:6px;color:var(--color-fg-secondary)}
+.mv-legend .swatch{width:14px;height:3px;border-radius:2px;flex:none}
+.mv-legend .swatch.dashed{background-image:linear-gradient(90deg,currentColor 55%,transparent 0);
+  background-size:6px 3px;background-color:transparent !important}
+
+.mv-foot{display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);
+  padding:6px var(--space-4);border-top:1px solid var(--color-border);color:var(--color-fg-tertiary)}
+.mv-foot .hint{font-size:11.5px}
+.mv-foot .src{font-size:11px;white-space:nowrap}
+
+/* Error card — what a bad declaration renders as, instead of a wrong picture. */
+.mv-error{border:1px solid var(--error-500);border-left-width:3px;border-radius:var(--radius-lg);
+  background:var(--error-100);padding:var(--space-3) var(--space-4);margin:var(--space-3) 0}
+.mv-error h4{margin:0 0 var(--space-2);color:var(--error-600)}
+.mv-error ul{margin:0;padding-left:18px;color:var(--error-600)}
+.mv-error li{margin-bottom:3px}
+.mv-warn{padding:8px var(--space-4);border-top:1px solid var(--color-border);
+  background:#fef8ec;color:var(--warning-500);font-size:12px}
+
+select:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible{
+  outline:2px solid var(--color-fg); outline-offset:2px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="host-banner">
+    <div>
+      <h1 class="t-h3">math-visual plugin — input playground</h1>
+      <div class="t-body2">A view-only plugin declared in a lesson's <span class="t-mono">requiredPlugins</span>, but
+        rendered <b>inline inside the tutor's chat message</b> — not in the right side panel, and with no toggle that
+        opens it. The tutor never supplies a computed value: it declares expressions, defining coordinates and raw data,
+        and every number on screen — angle measures, intersections, tangent slopes, Riemann totals, integrals,
+        regression coefficients — is computed by JSXGraph at render time. Anything the tutor asserts that the library
+        can check gets checked, and a declaration that can't be true renders an error card rather than a plausible
+        wrong picture. Sliders and draggable points are live; nothing is ever submitted back.</div>
+    </div>
+    <span class="host-tag t-body2">1 HTML file, no filetree</span>
+  </div>
+
+  <div class="host-section">
+    <div class="host-section-label"><span class="dot"></span><span class="t-label">Host — choose an input fixture</span></div>
+    <div class="fixture-row">
+      <div class="field">
+        <label class="t-label" for="fixtureSelect">Fixture</label>
+        <select id="fixtureSelect"></select>
+      </div>
+      <button class="btn btn-primary" id="btnLaunch">Launch</button>
+    </div>
+    <div class="fixture-desc t-body2" id="fixtureDesc"></div>
+
+    <div class="json-box">
+      <span class="t-label">pluginConfig["math-visual"] lives here — this is the whole declaration</span>
+      <textarea id="jsonInputs" class="json-editor" spellcheck="false" aria-label="Plugin inputs JSON, editable"></textarea>
+      <div class="json-actions">
+        <span class="t-body2 json-hint" id="jsonHint">Selecting a fixture loads its JSON here — edit it, then click Launch.</span>
+        <button class="btn" id="btnLaunchJson">Launch this JSON</button>
+      </div>
+      <div class="t-body2 json-error" id="jsonError"></div>
+    </div>
+
+    <div class="callback-log" id="callbackLog"></div>
+  </div>
+
+  <div class="host-section" style="margin-top:var(--space-4)">
+    <div class="host-section-label">
+      <span class="dot"></span><span class="t-label">Plugin surface — inline in the chat message</span>
+      <span class="spacer"></span>
+      <button class="btn btn-sm active" id="btnWide">Desktop 720px</button>
+      <button class="btn btn-sm" id="btnNarrow">Mobile 380px</button>
+    </div>
+    <div class="chat-stage">
+      <div class="chat-col" id="chatCol">
+        <div class="msg">
+          <div class="avatar">AI</div>
+          <div class="msg-body">
+            <div class="msg-who t-body2">Tutor</div>
+            <p class="t-body1" id="msgBefore">Let's look at this one together.</p>
+            <div id="pluginHost"></div>
+            <p class="t-body1" id="msgAfter">What do you notice?</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ======================================================================
+   MANIFEST (informal — stands in for src/manifest.json)
+   ====================================================================== */
+const MANIFEST = {
+  id: "math-visual",
+  version: "0.1.0",
+  displayName: "Math visual",
+  icon: "function",
+  // The one field that distinguishes this from every other plugin: it is
+  // rendered inline in the tutor's message, not mounted in the side panel.
+  // The host gives it the chat column's width and it owns its own height.
+  surface: "inline-message",
+  // View-only: no submissionSchema, nothing to resume. mount() returns the
+  // same figure for the same inputs, so there is no state worth saving.
+  // Honest punt, same as the marketing build: this demo pulls JSXGraph from a
+  // CDN. A real v1 bundle vendors it so capabilities.network stays false.
+  capabilities: { network: false, resumable: false, submits: false },
+  inputSchemaTopLevelKeys: ["title","caption","board","params","objects","display"],
+  boardKeys: ["type","x","y","aspect","grid","axes","pan"],
+  displayKeys: ["readouts","legend","height","hint"]
+};
+
+/* The JS mirror of the --viz-* CSS tokens. JSXGraph needs literal colour
+   strings, so this is the one place a hex appears twice; object declarations
+   only ever name a role. */
+const VIZ_COLORS = {
+  primary:"#2f5bea", secondary:"#0f8a5f", accent:"#d6336c",
+  violet:"#7c3aed", amber:"#b45309", teal:"#0e7490",
+  muted:"#8a94a3", error:"#c0392b"
+};
+const ROLE_CYCLE = ["primary","secondary","accent","violet","amber","teal"];
+const HEIGHTS = { s:230, m:300, l:390 };
+
+const OBJECT_TYPES = [
+  "function","piecewise","parametric","polar","implicit","inequality",
+  "point","segment","line","ray","vector","polygon","angle",
+  "circle","arc","ellipse",
+  "tangent","secant","derivative","riemann","integral","asymptote",
+  "scatter","bestfit","histogram","boxplot","bar",
+  "interval","tick","label"
+];
+
+/* ======================================================================
+   EXPRESSION COMPILATION
+   Everything the tutor writes as maths goes through JessieCode, JSXGraph's
+   own parser. Never eval, never new Function on tutor text.
+   ====================================================================== */
+let scratchBoard = null;
+function jc(){
+  if (!scratchBoard){
+    const d = document.createElement("div");
+    d.style.cssText = "position:absolute;width:1px;height:1px;left:-9999px;top:0";
+    d.id = "mv-scratch-board";
+    document.body.appendChild(d);
+    scratchBoard = JXG.JSXGraph.initBoard("mv-scratch-board",
+      { boundingbox:[-1,1,1,-1], axis:false, showCopyright:false, showNavigation:false, registerEvents:false });
+  }
+  return scratchBoard.jc;
+}
+
+/* Compile "a*x^2 + k" into (x, a, k) => number. Params are passed positionally
+   at call time rather than baked in, which is what makes a slider live. */
+function compileExpr(expr, vars, errors, where){
+  const varList = ["x","y","t"].concat(vars).join(",");
+  try {
+    const f = jc().snippet(String(expr), true, varList, true);
+    const probe = f.apply(null, new Array(3 + vars.length).fill(1));
+    if (typeof probe !== "number") throw new Error("did not evaluate to a number");
+    return f;
+  } catch(e){
+    errors.push(where + ': could not parse the expression "' + expr + '" (' + (e.message || e) + ').');
+    return null;
+  }
+}
+
+/* ======================================================================
+   VALIDATION
+   Three passes: shape (is this the right kind of thing), reference (does
+   `of:"f"` point at something that exists and is the right kind), and
+   mathematical (is what you declared actually true). The third pass is the
+   reason this plugin exists.
+   ====================================================================== */
+function validateInputs(rawInputs){
+  const inputs = (rawInputs && typeof rawInputs==="object" && !Array.isArray(rawInputs)) ? rawInputs : {};
+  const errors = [], warnings = [];
+
+  Object.keys(inputs).forEach(k=>{
+    if (!MANIFEST.inputSchemaTopLevelKeys.includes(k)) errors.push('Unknown top-level key "'+k+'".');
+  });
+
+  /* ---- params ---------------------------------------------------------- */
+  const params = [];
+  const paramNames = [];
+  (Array.isArray(inputs.params) ? inputs.params : []).forEach((p, i)=>{
+    const where = "params["+i+"]";
+    if (!p || typeof p!=="object"){ errors.push(where+" must be an object."); return; }
+    if (!p.name || !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(p.name)){
+      errors.push(where+'.name must be an identifier like "a" or "n".'); return;
+    }
+    if (["x","y","t","e","pi","PI"].includes(p.name)){
+      errors.push(where+'.name "'+p.name+'" is reserved — x, y and t are the plotting variables.'); return;
+    }
+    const min = Number(p.min), max = Number(p.max);
+    if (!isFinite(min) || !isFinite(max) || min >= max){
+      errors.push(where+" needs numeric min and max with min < max."); return;
+    }
+    let step = Number(p.step); if (!isFinite(step) || step <= 0) step = (max-min)/100;
+    let value = Number(p.value); if (!isFinite(value)) value = min + (max-min)/2;
+    if (value < min || value > max){
+      warnings.push(where+'.value ('+value+') sits outside ['+min+", "+max+"] — clamped.");
+      value = Math.min(max, Math.max(min, value));
+    }
+    params.push({ name:p.name, label:p.label || p.name, min, max, step, value, integer: !!p.integer });
+    paramNames.push(p.name);
+  });
+
+  /* ---- board ----------------------------------------------------------- */
+  const b = Object.assign({}, inputs.board || {});
+  Object.keys(inputs.board || {}).forEach(k=>{
+    if (!MANIFEST.boardKeys.includes(k)) errors.push('Unknown board key "'+k+'".');
+  });
+  const boardType = b.type || "cartesian";
+  if (!["cartesian","numberline","polar"].includes(boardType)){
+    errors.push('board.type "'+boardType+'" is not one of cartesian, numberline, polar.');
+  }
+  function range(v, where, fallback){
+    if (v === undefined) return fallback;
+    if (!Array.isArray(v) || v.length!==2 || !isFinite(Number(v[0])) || !isFinite(Number(v[1]))){
+      errors.push(where+" must be a [min, max] pair of numbers."); return fallback;
+    }
+    if (Number(v[0]) >= Number(v[1])){ errors.push(where+" needs min < max."); return fallback; }
+    return [Number(v[0]), Number(v[1])];
+  }
+  // axes: false hides the axis lines and ticks entirely — for a pure geometry
+  // or trigonometry construction (a triangle, a circle, a labelled figure)
+  // the coordinate frame isn't part of what's being taught, and drawing it
+  // anyway is noise the same way an unwanted grid would be. board.type stays
+  // "cartesian" — this only affects whether the axes render, not the
+  // coordinate system objects are placed in.
+  const board = {
+    type: boardType,
+    x: range(b.x, "board.x", [-5, 5]),
+    y: b.y === undefined ? null : range(b.y, "board.y", null),   // null ⇒ auto-frame
+    aspect: b.aspect === "equal" ? "equal" : "free",
+    grid: b.grid !== false,
+    axes: b.axes === false ? false : Object.assign({ xLabel:"x", yLabel:"y" }, b.axes || {}),
+    pan: !!b.pan
+  };
+  if (boardType === "numberline"){ board.aspect = "free"; board.grid = false; }
+
+  /* ---- display --------------------------------------------------------- */
+  const d = Object.assign({}, inputs.display || {});
+  Object.keys(inputs.display || {}).forEach(k=>{
+    if (!MANIFEST.displayKeys.includes(k)) errors.push('Unknown display key "'+k+'".');
+  });
+  const display = {
+    readouts: d.readouts !== false,
+    legend: d.legend !== false,
+    height: HEIGHTS[d.height] ? d.height : "m",
+    hint: d.hint || null
+  };
+
+  /* ---- objects --------------------------------------------------------- */
+  const rawObjects = Array.isArray(inputs.objects) ? inputs.objects : [];
+  if (rawObjects.length === 0) errors.push("objects must be a non-empty array — there is nothing to draw.");
+  const objects = [];
+  const byId = {};
+  let roleIndex = 0;
+
+  rawObjects.forEach((o, i)=>{
+    const where = "objects["+i+"]";
+    if (!o || typeof o!=="object" || Array.isArray(o)){ errors.push(where+" must be an object."); return; }
+    if (!o.type || !OBJECT_TYPES.includes(o.type)){
+      errors.push(where+'.type "'+(o.type===undefined?"(missing)":o.type)+'" is not a known object type.');
+      return;
+    }
+    const obj = Object.assign({}, o);
+    obj.__where = where;
+    obj.color = obj.color && VIZ_COLORS[obj.color] ? obj.color : ROLE_CYCLE[roleIndex++ % ROLE_CYCLE.length];
+    obj.style = obj.style === "dashed" ? "dashed" : "solid";
+    if (obj.id){
+      if (byId[obj.id]) errors.push(where+': duplicate id "'+obj.id+'".');
+      byId[obj.id] = obj;
+    }
+    objects.push(obj);
+  });
+
+  /* Reference pass — `of:` must name something that exists and can carry the
+     operation being asked of it. */
+  const CURVE_KINDS = ["function","piecewise","parametric","polar","implicit"];
+  const NEEDS_FUNCTION = { tangent:1, secant:1, derivative:1, riemann:1, integral:1 };
+  objects.forEach(o=>{
+    if (NEEDS_FUNCTION[o.type]){
+      if (!o.of){ errors.push(o.__where+" ("+o.type+') needs "of" naming a function object.'); return; }
+      const target = byId[o.of];
+      if (!target){ errors.push(o.__where+': "of" points at "'+o.of+'", which is not the id of any object here.'); return; }
+      if (target.type !== "function" && target.type !== "piecewise"){
+        errors.push(o.__where+': '+o.type+' needs a function; "'+o.of+'" is a '+target.type+'.');
+      }
+    }
+    if (o.type === "inequality"){
+      if (!o.of || !byId[o.of]){ errors.push(o.__where+' (inequality) needs "of" naming a function or line.'); }
+      else if (!CURVE_KINDS.includes(byId[o.of].type) && byId[o.of].type !== "line"){
+        errors.push(o.__where+': inequality needs a curve or a line; "'+o.of+'" is a '+byId[o.of].type+'.');
+      }
+    }
+    if (["angle","polygon","segment","line","ray","vector","circle","arc","ellipse","midpoint"].includes(o.type)){
+      const pts = o.points || o.through;
+      if (!Array.isArray(pts)) return;   // per-type checks below handle specifics
+    }
+  });
+
+  return {
+    ok: errors.length === 0,
+    errors, warnings,
+    model: { title: inputs.title || null, caption: inputs.caption || null,
+             board, params, paramNames, objects, byId, display }
+  };
+}
+
+/* ======================================================================
+   AUTO-FRAMING
+   If board.y is omitted the plugin samples every declared curve across
+   board.x and picks a window that contains the behaviour. This exists
+   because choosing a viewing window by intuition is exactly the sort of
+   thing that goes quietly wrong.
+   ====================================================================== */
+function autoFrame(model, fns){
+  const [x0, x1] = model.board.x;
+  const ys = [];
+  const N = 400;
+  model.objects.forEach(o=>{
+    const f = fns[o.__where];
+    if (!f) return;
+    if (o.type === "function" || o.type === "derivative"){
+      for (let i=0;i<=N;i++){
+        const x = x0 + (x1-x0)*i/N;
+        const v = f(x);
+        if (isFinite(v)) ys.push(v);
+      }
+    } else if (o.type === "point" && Array.isArray(o.at) && isFinite(o.at[1])){
+      ys.push(Number(o.at[1]));
+    } else if (o.type === "scatter" && Array.isArray(o.data)){
+      o.data.forEach(p=>{ if (Array.isArray(p) && isFinite(p[1])) ys.push(Number(p[1])); });
+    }
+  });
+  if (ys.length === 0) return [-4, 4];
+
+  /* Trim to the 2nd–98th percentile before framing. A single sample next to a
+     pole would otherwise blow the window out to ±10^6 and flatten the curve
+     into the axis — the classic bad-window failure this is here to prevent. */
+  ys.sort((a,b)=>a-b);
+  const lo = ys[Math.floor(ys.length*0.02)];
+  const hi = ys[Math.ceil(ys.length*0.98)-1];
+  let min = Math.min(lo, 0), max = Math.max(hi, 0);
+  if (!isFinite(min) || !isFinite(max) || min === max){ min -= 1; max += 1; }
+  const pad = (max-min)*0.12;
+  return [min-pad, max+pad];
+}
+
+/* ======================================================================
+   THE PLUGIN CONTRACT
+   mount(container, inputs, callbacks) -> { submit, unmount }
+   submit() is null by contract: this plugin never returns anything.
+   ====================================================================== */
+function mount(container, inputs, callbacks){
+  callbacks = callbacks || {};
+  const built = validateInputs(inputs);
+
+  if (!built.ok){
+    container.innerHTML =
+      '<div class="mv-error"><h4 class="t-h5">This figure was not drawn</h4><ul class="t-body2">' +
+      built.errors.map(e=>'<li>'+escapeHtml(e)+'</li>').join("") +
+      '</ul></div>';
+    built.errors.forEach(e=>{ if (callbacks.onError) callbacks.onError(e); });
+    return { submit: ()=>null, unmount: ()=>{ container.innerHTML=""; } };
+  }
+
+  const model = built.model;
+  const P = {};                       // live param values, read at call time
+  model.params.forEach(p=>{ P[p.name] = p.value; });
+  const pv = () => model.paramNames.map(n=>P[n]);
+
+  const runtimeErrors = [];
+  const warnings = built.warnings.slice();
+  const readouts = [];                // {label, get:()=>string}
+  const legend = [];                  // {label, color, style}
+
+  /* --- compile every expression up front so a typo is an error card, not a
+         blank figure --------------------------------------------------- */
+  const fns = {};
+  model.objects.forEach(o=>{
+    const vars = model.paramNames;
+    const mk = (expr, suffix) => {
+      const raw = compileExpr(expr, vars, runtimeErrors, o.__where + (suffix||""));
+      if (!raw) return null;
+      return function(){
+        const args = Array.prototype.slice.call(arguments);
+        while (args.length < 3) args.push(0);
+        return raw.apply(null, args.slice(0,3).concat(pv()));
+      };
+    };
+    if (o.type === "function" && o.expr !== undefined)  fns[o.__where] = x => mkCache(o,"expr",mk)(x);
+    else if (o.type === "parametric"){ o.__fx = mk(o.x, ".x"); o.__fy = mk(o.y, ".y"); }
+    else if (o.type === "polar")      o.__fr = mk(o.r, ".r");
+    else if (o.type === "implicit")   o.__fi = mk(o.expr, ".expr");
+    else if (o.type === "asymptote" && o.expr !== undefined) o.__fa = mk(o.expr, ".expr");
+    if (o.type === "function" && o.expr !== undefined) fns[o.__where] = mk(o.expr, ".expr");
+    if (o.type === "piecewise" && Array.isArray(o.pieces)){
+      o.__pieces = o.pieces.map((pc,j)=>({ f: mk(pc.expr, ".pieces["+j+"].expr"), from: pc.from, to: pc.to }));
+    }
+  });
+  function mkCache(){ return ()=>0; }   // unreachable; kept out of the hot path
+
+  /* numeric fields may themselves reference a param, e.g. n: "n" */
+  function num(v, where, fallback){
+    if (typeof v === "number" && isFinite(v)) return ()=>v;
+    if (typeof v === "string"){
+      const f = compileExpr(v, model.paramNames, runtimeErrors, where);
+      if (!f) return ()=>fallback;
+      return ()=> f.apply(null, [0,0,0].concat(pv()));
+    }
+    if (v === undefined && fallback !== undefined) return ()=>fallback;
+    runtimeErrors.push(where + " must be a number or an expression in the declared params.");
+    return ()=>fallback;
+  }
+
+  if (runtimeErrors.length){
+    container.innerHTML =
+      '<div class="mv-error"><h4 class="t-h5">This figure was not drawn</h4><ul class="t-body2">' +
+      runtimeErrors.map(e=>'<li>'+escapeHtml(e)+'</li>').join("") +
+      '</ul></div>';
+    runtimeErrors.forEach(e=>{ if (callbacks.onError) callbacks.onError(e); });
+    return { submit: ()=>null, unmount: ()=>{ container.innerHTML=""; } };
+  }
+
+  /* --- resolve derivative objects into plottable functions before framing */
+  model.objects.forEach(o=>{
+    if (o.type === "derivative"){
+      const base = fns[model.byId[o.of].__where];
+      if (base) fns[o.__where] = JXG.Math.Numerics.D(base);
+    }
+  });
+
+  const yRange = model.board.y || autoFrame(model, fns);
+
+  /* --- DOM ------------------------------------------------------------- */
+  const boardId = "mv-board-" + Math.random().toString(36).slice(2,10);
+  container.innerHTML =
+    '<div class="mv">' +
+      (model.title || model.caption
+        ? '<div class="mv-head">' +
+            (model.title ? '<div class="mv-title t-h5">'+escapeHtml(model.title)+'</div>' : "") +
+            (model.caption ? '<div class="mv-caption t-body2">'+escapeHtml(model.caption)+'</div>' : "") +
+          '</div>'
+        : "") +
+      '<div class="mv-boardwrap"><div id="'+boardId+'" class="mv-board jxgbox" ' +
+        'style="height:'+HEIGHTS[model.display.height]+'px"></div></div>' +
+      '<div class="js-params"></div>' +
+      '<div class="js-readouts"></div>' +
+      '<div class="js-legend"></div>' +
+      '<div class="js-warn"></div>' +
+      '<div class="mv-foot">' +
+        '<span class="hint t-body2"></span>' +
+        '<span class="src t-body2">computed by JSXGraph 1.13.3</span>' +
+      '</div>' +
+    '</div>';
+
+  const [x0, x1] = model.board.x;
+  const board = JXG.JSXGraph.initBoard(boardId, {
+    boundingbox: [x0, yRange[1], x1, yRange[0]],
+    keepaspectratio: model.board.aspect === "equal",
+    axis: false,
+    grid: false,
+    showCopyright: false,
+    showNavigation: false,
+    showInfobox: false,
+    pan: { enabled: model.board.pan, needTwoFingers: true },
+    zoom: { enabled: model.board.pan, wheel: false },
+    // JSXGraph's own `resize` option only reacts to the browser window's
+    // resize event. It never fires when a host narrows the chat column
+    // around a fixed-size window (exactly the case a mobile-width chat
+    // message is) — so this plugin's own ResizeObserver drives resizing
+    // instead, below, and JSXGraph's is left off to avoid the two fighting.
+    resize: { enabled: false }
+  });
+  board.suspendUpdate();
+
+  const boardWrap = container.querySelector(".mv-boardwrap");
+  // dontSetBoundingBox: false (the 4th argument) is what makes this correct —
+  // it tells JSXGraph to re-fit the *original* declared bounding box into the
+  // new pixel size, so the visible math range never changes width just
+  // because the chat column did. Passing true there instead keeps the old
+  // pixel-per-unit zoom level fixed, which silently crops the figure down to
+  // whatever range those fewer pixels happen to cover at mobile width — a
+  // real regression this comment used to justify.
+  // A ResizeObserver always fires once immediately on observe(), reporting
+  // the size JSXGraph's own constructor already read moments ago; the width
+  // guard below just skips that redundant no-op call rather than for correctness.
+  let lastW = boardWrap.getBoundingClientRect().width;
+  const resizeObserver = new ResizeObserver(entries=>{
+    const w = entries[0].contentRect.width;
+    if (w > 10 && Math.abs(w - lastW) > 1){
+      lastW = w;
+      board.resizeContainer(w, HEIGHTS[model.display.height], true, false);
+    }
+  });
+  resizeObserver.observe(boardWrap);
+
+  if (model.board.grid){
+    board.create("grid", [], { strokeColor: getComputedStyle(document.documentElement)
+      .getPropertyValue("--viz-grid").trim() || "#e8ebf1", strokeWidth: 1 });
+  }
+  if (model.board.axes !== false){
+    const axisOpts = { strokeColor:"#9aa3b2", strokeWidth:1, highlight:false,
+      ticks:{ majorHeight:6, minorTicks:0, drawLabels:true, label:{fontSize:11, strokeColor:"#6b7280"},
+              strokeColor:"#c7cdd8" }, lastArrow:{size:5}, firstArrow:false, name:"", withLabel:false };
+    board.create("axis", [[0,0],[1,0]], deepMerge(axisOpts, { name: model.board.axes.xLabel, withLabel:true,
+      label:{position:"rt", offset:[-8,14], fontSize:11.5, strokeColor:"#6b7280"} }));
+    if (model.board.type !== "numberline"){
+      board.create("axis", [[0,0],[0,1]], deepMerge(axisOpts, { name: model.board.axes.yLabel, withLabel:true,
+        label:{position:"rt", offset:[10,-6], fontSize:11.5, strokeColor:"#6b7280"} }));
+    }
+  }
+
+  const els = {};   // id -> JSXGraph element, for `of:` references
+  model.objects.forEach(o=>{ try { buildObject(o); } catch(e){
+    runtimeErrors.push(o.__where + " (" + o.type + ") could not be drawn: " + (e.message||e));
+  }});
+
+  board.unsuspendUpdate();
+
+  /* ==================================================================== */
+  function C(o){ return VIZ_COLORS[o.color]; }
+  function baseOpts(o, extra){
+    return deepMerge({
+      strokeColor: C(o), strokeWidth: 2.2, highlight: false, fixed: !o.draggable,
+      dash: o.style === "dashed" ? 2 : 0,
+      name: "", withLabel: false
+    }, extra || {});
+  }
+  function noteLegend(o, label){
+    if (label) legend.push({ label, color: C(o), style: o.style });
+  }
+  function pt(coords, where){
+    if (!Array.isArray(coords) || coords.length !== 2 || !isFinite(Number(coords[0])) || !isFinite(Number(coords[1]))){
+      runtimeErrors.push(where + " must be an [x, y] pair of numbers.");
+      return null;
+    }
+    return [Number(coords[0]), Number(coords[1])];
+  }
+  function resolvePoint(ref, where){
+    // Either a literal [x,y] or the id of a declared point object.
+    if (typeof ref === "string"){
+      if (els[ref] && els[ref].elementClass === JXG.OBJECT_CLASS_POINT) return els[ref];
+      runtimeErrors.push(where + ': "' + ref + '" is not the id of a point in this figure.');
+      return null;
+    }
+    const c = pt(ref, where);
+    return c ? board.create("point", c, { visible:false, fixed:true, name:"" }) : null;
+  }
+  function fmt(v, dp){
+    if (!isFinite(v)) return "—";
+    return JXG.toFixed(v, dp === undefined ? 4 : dp);
+  }
+
+  function buildObject(o){
+    const w = o.__where;
+    switch(o.type){
+
+    /* ---- curves ------------------------------------------------------- */
+    case "function": {
+      const f = fns[w];
+      const dom = Array.isArray(o.domain) ? o.domain : model.board.x;
+      const g = board.create("functiongraph", [f, ()=>Number(dom[0]), ()=>Number(dom[1])], baseOpts(o));
+      els[o.id] = g; g.__f = f;
+      noteLegend(o, o.label);
+      break;
+    }
+    case "piecewise": {
+      const parts = [];
+      o.__pieces.forEach(pc=>{
+        board.create("functiongraph", [pc.f, ()=>Number(pc.from), ()=>Number(pc.to)], baseOpts(o));
+        parts.push(pc);
+      });
+      // A single callable across the whole domain, so tangents/integrals can
+      // still reference a piecewise object by id.
+      const f = x => { for (const pc of parts){ if (x >= pc.from && x <= pc.to) return pc.f(x); } return NaN; };
+      els[o.id] = { __f: f, elementClass: -1 };
+      fns[w] = f;
+      noteLegend(o, o.label);
+      break;
+    }
+    case "parametric": {
+      const tr = Array.isArray(o.tRange) ? o.tRange : [0, 2*Math.PI];
+      const c = board.create("curve", [t=>o.__fx(0,0,t), t=>o.__fy(0,0,t), ()=>Number(tr[0]), ()=>Number(tr[1])],
+        baseOpts(o));
+      els[o.id] = c; noteLegend(o, o.label);
+      break;
+    }
+    case "polar": {
+      const tr = Array.isArray(o.tRange) ? o.tRange : [0, 2*Math.PI];
+      const c = board.create("curve", [t=>o.__fr(0,0,t), [0,0], ()=>Number(tr[0]), ()=>Number(tr[1])],
+        deepMerge(baseOpts(o), { curveType:"polar" }));
+      els[o.id] = c; noteLegend(o, o.label);
+      break;
+    }
+    case "implicit": {
+      const c = board.create("implicitcurve", [(x,y)=>o.__fi(x,y,0)],
+        deepMerge(baseOpts(o), { resolution_outer:40, resolution_inner:40 }));
+      els[o.id] = c; noteLegend(o, o.label);
+      break;
+    }
+    case "inequality": {
+      const target = els[o.of];
+      if (!target){ runtimeErrors.push(w+': "'+o.of+'" was not drawn, so the region has no boundary.'); break; }
+      const inverse = o.side === "below";
+      board.create("inequality", [target], {
+        fillColor: C(o), fillOpacity: 0.14, inverse, strokeWidth: 0
+      });
+      noteLegend(o, o.label);
+      break;
+    }
+
+    /* ---- points and lines --------------------------------------------- */
+    case "point": {
+      let p;
+      if (o.on){
+        const host = els[o.on];
+        if (!host){ runtimeErrors.push(w+': "on" points at "'+o.on+'", which is not in this figure.'); break; }
+        const atVal = num(o.at !== undefined ? o.at : 0, w+".at", 0)();
+        // Seeding a glider needs real (x, y) coordinates, not a single number,
+        // and what that number *means* depends on the curve family:
+        //  - circle: an interior (x, 0) seed collapses onto the single nearest
+        //    circumference point for every |x| < radius (every "at" between
+        //    -r and r lands on the same point), so "at" is an angle in radians
+        //    instead, placed exactly on the circle before the glider is made.
+        //  - function graph: "at" is the x-coordinate. The seed y must be the
+        //    real f(x), not 0 — JSXGraph's glider placement is a genuine
+        //    nearest-point search over the whole curve, not "look up x", so a
+        //    y=0 seed on an oscillating function (sin, tan, ...) can converge
+        //    to a nearby point where the curve merely crosses y=0 rather than
+        //    the intended x.
+        //  - anything else: "at" is the x-coordinate with a y=0 seed.
+        let seedX = atVal, seedY = 0;
+        const hostModel = model.byId[o.on];
+        if (host.elementClass === JXG.OBJECT_CLASS_CIRCLE){
+          const cx = host.center.X(), cy = host.center.Y(), r = host.Radius();
+          seedX = cx + r*Math.cos(atVal); seedY = cy + r*Math.sin(atVal);
+        } else if (hostModel && (hostModel.type === "function" || hostModel.type === "piecewise") && fns[hostModel.__where]){
+          seedY = fns[hostModel.__where](atVal);
+        }
+        const xAt = seedX;
+        p = board.create("glider", [xAt, seedY, host], deepMerge(baseOpts(o, {fixed:false}), {
+          size: 3.5, fillColor: C(o), strokeColor:"#fff", strokeWidth:1.5,
+          name: o.label || "", withLabel: !!o.label, label:{fontSize:12, offset:[6,10]}
+        }));
+        if (o.draggable === false) p.setAttribute({fixed:true});
+      } else if (o.intersect){
+        const a = els[o.intersect[0]], bEl = els[o.intersect[1]];
+        if (!a || !bEl){ runtimeErrors.push(w+": intersect names an object that is not in this figure."); break; }
+        p = board.create("intersection", [a, bEl, o.which || 0], deepMerge(baseOpts(o), {
+          size:3.5, fillColor:C(o), strokeColor:"#fff", strokeWidth:1.5,
+          name:o.label||"", withLabel:!!o.label, label:{fontSize:12, offset:[6,10]}
+        }));
+        // The tutor did not supply where they cross — the library found it.
+        if (model.display.readouts) readouts.push({
+          label: o.label || "intersection",
+          get: ()=> "(" + fmt(p.X(),3) + ", " + fmt(p.Y(),3) + ")"
+        });
+      } else {
+        const c = pt(o.at, w+".at"); if (!c) break;
+        p = board.create("point", c, deepMerge(baseOpts(o, {fixed:!o.draggable}), {
+          size:3.5, fillColor:C(o), strokeColor:"#fff", strokeWidth:1.5,
+          name:o.label||"", withLabel:!!o.label, label:{fontSize:12, offset:[6,10]}
+        }));
+      }
+      if (o.id && p) els[o.id] = p;
+      if (p && o.showValue && model.display.readouts) readouts.push({
+        label: o.label || "point", get: ()=> "(" + fmt(p.X(),3) + ", " + fmt(p.Y(),3) + ")"
+      });
+      break;
+    }
+    case "segment": case "line": case "ray": case "vector": {
+      const pts = o.points || [];
+      if (pts.length !== 2){ runtimeErrors.push(w+".points must be two points."); break; }
+      const A = resolvePoint(pts[0], w+".points[0]"), B = resolvePoint(pts[1], w+".points[1]");
+      if (!A || !B) break;
+      const straight = o.type === "line" ? {straightFirst:true, straightLast:true}
+                     : o.type === "ray"  ? {straightFirst:false, straightLast:true}
+                     : {straightFirst:false, straightLast:false};
+      // An on-canvas name only earns its place for line/ray: they're
+      // unbounded, so proximity to the two defining points can't identify
+      // them the way it does for a segment or vector. A segment/vector's
+      // label already surfaces cleanly in the readout list below the figure
+      // when showValue is set — painting it a second time, right at the
+      // vertex, is what was piling text on top of point and angle labels
+      // on a small triangle (three "AB"/"BC"/"CA" labels stacked on their
+      // own endpoints, on top of "A"/"B"/"C" and "∠A"/"∠B").
+      const canvasLabel = o.type === "line" || o.type === "ray";
+      const el = board.create("line", [A,B], deepMerge(baseOpts(o), deepMerge(straight, {
+        lastArrow: o.type === "vector" ? {type:2, size:6} : false,
+        name: canvasLabel ? (o.label||"") : "", withLabel: canvasLabel && !!o.label,
+        label:{fontSize:12, strokeColor:C(o)}
+      })));
+      if (o.id) els[o.id] = el;
+      if (o.showValue && model.display.readouts){
+        if (o.type === "segment") readouts.push({ label:(o.label||"length"), get:()=> fmt(A.Dist(B),3) });
+        else readouts.push({ label:(o.label||"slope"), get:()=> fmt(el.getSlope(),3) });
+      }
+      noteLegend(o, o.type === "segment" || o.type === "vector" ? null : o.label);
+      break;
+    }
+    case "polygon": {
+      const pts = (o.points||[]).map((p,i)=>resolvePoint(p, w+".points["+i+"]"));
+      if (pts.length < 3 || pts.some(p=>!p)){ runtimeErrors.push(w+".points needs at least three points."); break; }
+      pts.forEach(p=>p.setAttribute({visible:true, size:3, fillColor:C(o), strokeColor:"#fff", strokeWidth:1.5}));
+      const poly = board.create("polygon", pts, deepMerge(baseOpts(o), {
+        fillColor:C(o), fillOpacity:0.10, borders:{strokeColor:C(o), strokeWidth:2.2, highlight:false}
+      }));
+      if (o.id) els[o.id] = poly;
+      if (o.showValue && model.display.readouts) readouts.push({
+        label: o.label || "area", get: ()=> fmt(Math.abs(poly.Area()),4)
+      });
+      break;
+    }
+    case "angle": {
+      const pts = o.points || [];
+      if (pts.length !== 3){ runtimeErrors.push(w+".points must be three points: arm, vertex, arm."); break; }
+      const A = resolvePoint(pts[0], w+".points[0]"),
+            V = resolvePoint(pts[1], w+".points[1]"),
+            B = resolvePoint(pts[2], w+".points[2]");
+      if (!A || !V || !B) break;
+      // The measure is read off the construction, never asserted by the caller.
+      // JXG's raw Value() is a directed sweep from the first arm to the last,
+      // counterclockwise — depending on point order that can be the reflex
+      // (>180°) angle even though "the angle at a vertex" conventionally means
+      // the one ≤180°. degOf() always reports that non-reflex measure, so a
+      // draggable point can never make the printed number read as an obvious
+      // impossibility, whichever way JXG happened to sweep it internally.
+      const self = { el: null };
+      const degOf = () => {
+        if (!self.el) return NaN;
+        const d = self.el.Value()*180/Math.PI;
+        return d > 180 ? 360 - d : d;
+      };
+      const ang = board.create("angle", [A,V,B], {
+        radius: o.radius || 0.55, fillColor: C(o), fillOpacity: 0.22,
+        strokeColor: C(o), strokeWidth: 1.6, highlight:false, fixed:true,
+        name: ()=> self.el ? JXG.toFixed(degOf(), 1) + "°" : "",
+        withLabel: o.showValue !== false,
+        label: { fontSize:12, strokeColor: C(o), autoPosition:false }
+      });
+      self.el = ang;
+      if (o.id) els[o.id] = ang;
+      if (o.label && model.display.readouts) readouts.push({
+        label: o.label, get: ()=> JXG.toFixed(degOf(), 2) + "°"
+      });
+      break;
+    }
+
+    /* ---- round things -------------------------------------------------- */
+    case "circle": {
+      const centre = resolvePoint(o.center, w+".center"); if (!centre) break;
+      let c;
+      if (o.through){
+        const T = resolvePoint(o.through, w+".through"); if (!T) break;
+        c = board.create("circle", [centre, T], baseOpts(o));
+      } else {
+        const r = num(o.radius, w+".radius", 1);
+        c = board.create("circle", [centre, r], baseOpts(o));
+      }
+      centre.setAttribute({visible: o.showCenter !== false, size:3, fillColor:C(o), strokeColor:"#fff", strokeWidth:1.5});
+      if (o.id) els[o.id] = c;
+      if (o.showValue && model.display.readouts) readouts.push({
+        label: o.label || "circumference", get: ()=> fmt(2*Math.PI*c.Radius(), 4)
+      });
+      noteLegend(o, o.label);
+      break;
+    }
+    case "arc": {
+      const pts = (o.points||[]).map((p,i)=>resolvePoint(p, w+".points["+i+"]"));
+      if (pts.length !== 3 || pts.some(p=>!p)){ runtimeErrors.push(w+".points must be centre, start, end."); break; }
+      const a = board.create("arc", pts, baseOpts(o));
+      if (o.id) els[o.id] = a;
+      break;
+    }
+    case "ellipse": {
+      const f1 = resolvePoint(o.foci && o.foci[0], w+".foci[0]"),
+            f2 = resolvePoint(o.foci && o.foci[1], w+".foci[1]");
+      if (!f1 || !f2) break;
+      const sum = num(o.sum, w+".sum", 4);
+      const e = board.create("ellipse", [f1, f2, sum], baseOpts(o));
+      if (o.id) els[o.id] = e;
+      noteLegend(o, o.label);
+      break;
+    }
+
+    /* ---- calculus ------------------------------------------------------ */
+    case "tangent": {
+      const host = els[o.of], f = fns[model.byId[o.of].__where];
+      const at = num(o.at, w+".at", 0);
+      // Seed y = f(x), not 0 — see the "point on function" comment above for
+      // why an incorrect seed can make the glider snap to the wrong x.
+      const g = board.create("glider", [at(), f(at()), host], {
+        size:3.5, fillColor:C(o), strokeColor:"#fff", strokeWidth:1.5,
+        name:"", withLabel:false, fixed: o.draggable === false
+      });
+      if (o.draggable === false) g.setPosition(JXG.COORDS_BY_USER, [at(), f(at())]);
+      const t = board.create("tangent", [g], baseOpts(o, {strokeWidth:2}));
+      const dfd = JXG.Math.Numerics.D(f);
+      if (model.display.readouts) readouts.push({
+        label: o.label || "slope at x", get: ()=> "f′(" + fmt(g.X(),2) + ") = " + fmt(dfd(g.X()), 4)
+      });
+      if (o.id) els[o.id] = t;
+      noteLegend(o, o.label || "tangent");
+      break;
+    }
+    case "secant": {
+      const host = els[o.of], f = fns[model.byId[o.of].__where];
+      const a = num(o.from, w+".from", 0), b2 = num(o.to, w+".to", 1);
+      const g1 = board.create("glider", [a(),f(a()),host], {size:3.5, fillColor:C(o), strokeColor:"#fff", strokeWidth:1.5, name:"", withLabel:false});
+      const g2 = board.create("glider", [b2(),f(b2()),host], {size:3.5, fillColor:C(o), strokeColor:"#fff", strokeWidth:1.5, name:"", withLabel:false});
+      const s = board.create("line", [g1,g2], baseOpts(o, {strokeWidth:2}));
+      if (model.display.readouts) readouts.push({
+        label: o.label || "average rate of change",
+        get: ()=> fmt((g2.Y()-g1.Y())/(g2.X()-g1.X()), 4)
+      });
+      if (o.id) els[o.id] = s;
+      noteLegend(o, o.label || "secant");
+      break;
+    }
+    case "derivative": {
+      const f = fns[w];
+      const dom = Array.isArray(o.domain) ? o.domain : model.board.x;
+      const g = board.create("functiongraph", [f, ()=>Number(dom[0]), ()=>Number(dom[1])],
+        baseOpts(o, { dash: o.style === "solid" ? 0 : 2 }));
+      if (o.id) els[o.id] = g;
+      noteLegend(o, o.label || "f′");
+      break;
+    }
+    case "riemann": {
+      const f = fns[model.byId[o.of].__where];
+      const method = ["left","right","middle","trapezoidal","lower","upper"].includes(o.method)
+        ? o.method : "middle";
+      if (o.method && !["left","right","middle","trapezoidal","lower","upper"].includes(o.method)){
+        warnings.push(w+'.method "'+o.method+'" is not recognised — used "middle".');
+      }
+      const a = num(o.from, w+".from", model.board.x[0]);
+      const bb = num(o.to,   w+".to",   model.board.x[1]);
+      const n = num(o.n,     w+".n",    6);
+      const nInt = ()=> Math.max(1, Math.round(n()));
+      board.create("riemannsum", [f, nInt, method, a, bb], {
+        fillColor: C(o), fillOpacity: 0.30, strokeColor: C(o), strokeWidth: 1, highlight:false
+      });
+      // The total is the library's, not the caller's.
+      if (model.display.readouts) readouts.push({
+        label: (o.label || (method + " sum")),
+        get: ()=> "n=" + nInt() + " → " + fmt(JXG.Math.Numerics.riemannsum(f, nInt(), method, a(), bb()), 4)
+      });
+      noteLegend(o, o.label || (method + " rectangles"));
+      break;
+    }
+    case "integral": {
+      const f = fns[model.byId[o.of].__where];
+      const a = num(o.from, w+".from", model.board.x[0]);
+      const bb = num(o.to,   w+".to",   model.board.x[1]);
+      const host = els[o.of];
+      board.create("integral", [[a(), bb()], host], {
+        fillColor: C(o), fillOpacity: 0.18, strokeWidth: 0,
+        withLabel: false, curveLeft:{visible:false}, curveRight:{visible:false},
+        baseLeft:{visible:false}, baseRight:{visible:false}, highlight:false
+      });
+      if (model.display.readouts) readouts.push({
+        label: o.label || ("∫ from " + fmt(a(),2) + " to " + fmt(bb(),2)),
+        get: ()=> fmt(JXG.Math.Numerics.I([a(), bb()], f), 4)
+      });
+      noteLegend(o, o.label || "exact area");
+      break;
+    }
+    case "asymptote": {
+      let el;
+      if (o.at !== undefined && o.orientation === "vertical"){
+        const xv = num(o.at, w+".at", 0);
+        el = board.create("line", [[xv(),0],[xv(),1]], baseOpts(o, {
+          straightFirst:true, straightLast:true, strokeWidth:1.6, dash:3, strokeColor: VIZ_COLORS.muted
+        }));
+      } else if (o.at !== undefined){
+        const yv = num(o.at, w+".at", 0);
+        el = board.create("line", [[0,yv()],[1,yv()]], baseOpts(o, {
+          straightFirst:true, straightLast:true, strokeWidth:1.6, dash:3, strokeColor: VIZ_COLORS.muted
+        }));
+      } else if (o.__fa){
+        el = board.create("functiongraph", [x=>o.__fa(x,0,0), model.board.x[0], model.board.x[1]],
+          baseOpts(o, {strokeWidth:1.6, dash:3, strokeColor: VIZ_COLORS.muted}));
+      } else { runtimeErrors.push(w+" needs at + orientation, or expr."); break; }
+      if (o.id) els[o.id] = el;
+      legend.push({ label: o.label || "asymptote", color: VIZ_COLORS.muted, style:"dashed" });
+      break;
+    }
+
+    /* ---- data and statistics ------------------------------------------- */
+    case "scatter": {
+      const data = Array.isArray(o.data) ? o.data : [];
+      if (data.length === 0){ runtimeErrors.push(w+".data must be a non-empty array of [x, y] pairs."); break; }
+      const bad = data.findIndex(p=>!Array.isArray(p)||p.length!==2||!isFinite(Number(p[0]))||!isFinite(Number(p[1])));
+      if (bad >= 0){ runtimeErrors.push(w+".data["+bad+"] is not an [x, y] pair of numbers."); break; }
+      data.forEach(p=>board.create("point", [Number(p[0]), Number(p[1])], {
+        size:2.6, fillColor:C(o), strokeColor:"#fff", strokeWidth:1, fixed:true, name:"", withLabel:false, highlight:false
+      }));
+      o.__xs = data.map(p=>Number(p[0])); o.__ys = data.map(p=>Number(p[1]));
+      if (o.id) els[o.id] = o;
+      noteLegend(o, o.label);
+      if (model.display.readouts && o.showValue) readouts.push({ label:(o.label||"n"), get:()=> String(data.length) });
+      break;
+    }
+    case "bestfit": {
+      const src = model.byId[o.of];
+      if (!src || src.type !== "scatter" || !src.__xs){
+        runtimeErrors.push(w+': bestfit needs "of" naming a scatter object that was drawn.'); break;
+      }
+      const xs = src.__xs, ys = src.__ys;
+      const degree = Number.isInteger(o.degree) && o.degree >= 1 ? o.degree : 1;
+      if (xs.length <= degree){ runtimeErrors.push(w+": not enough points to fit a degree-"+degree+" model."); break; }
+      // Coefficients come from the regression, never from the caller.
+      const f = JXG.Math.Numerics.regressionPolynomial(degree, xs, ys);
+      board.create("functiongraph", [f, Math.min.apply(null,xs), Math.max.apply(null,xs)],
+        baseOpts(o, {strokeWidth:2}));
+      const meanY = ys.reduce((s,v)=>s+v,0)/ys.length;
+      const ssTot = ys.reduce((s,v)=>s+(v-meanY)*(v-meanY),0);
+      const ssRes = xs.reduce((s,x,i)=>{ const r = ys[i]-f(x); return s+r*r; },0);
+      const r2 = ssTot === 0 ? 1 : 1 - ssRes/ssTot;
+      if (model.display.readouts){
+        if (degree === 1){
+          const b1 = f(1)-f(0), b0 = f(0);
+          readouts.push({ label: o.label || "least-squares line",
+            get: ()=> "y = " + fmt(b1,4) + "x " + (b0<0?"− ":"+ ") + fmt(Math.abs(b0),4) });
+        } else {
+          readouts.push({ label: o.label || ("degree-"+degree+" fit"), get: ()=> f.getTerm() });
+        }
+        readouts.push({ label:"r²", get: ()=> fmt(r2, 4) });
+      }
+      noteLegend(o, o.label || "line of best fit");
+      break;
+    }
+    case "histogram": case "bar": {
+      let labels, heights;
+      if (o.type === "histogram"){
+        const data = Array.isArray(o.data) ? o.data.map(Number).filter(isFinite) : [];
+        if (!data.length){ runtimeErrors.push(w+".data must be a non-empty array of numbers."); break; }
+        const width = num(o.binWidth, w+".binWidth", 1)();
+        const start = o.from !== undefined ? num(o.from, w+".from", 0)() : Math.floor(Math.min.apply(null,data)/width)*width;
+        const end = Math.max.apply(null, data);
+        const bins = Math.max(1, Math.ceil((end - start)/width + 1e-9));
+        heights = new Array(bins).fill(0);
+        // Binning is [lo, hi), so a value on a boundary lands in the higher bin.
+        data.forEach(v=>{ const k = Math.min(bins-1, Math.floor((v-start)/width)); if (k>=0) heights[k]++; });
+        labels = heights.map((_,k)=> start + k*width);
+        drawBars(o, labels.map((lo,k)=>[lo, lo+width, heights[k]]));
+        if (model.display.readouts) readouts.push({ label:(o.label||"n"), get:()=>String(data.length) });
+      } else {
+        const cats = Array.isArray(o.categories) ? o.categories : [];
+        const vals = Array.isArray(o.values) ? o.values.map(Number) : [];
+        if (!cats.length || cats.length !== vals.length || vals.some(v=>!isFinite(v))){
+          runtimeErrors.push(w+" needs categories and values arrays of the same length."); break;
+        }
+        drawBars(o, vals.map((v,k)=>[k+0.15, k+0.85, v]), cats);
+      }
+      noteLegend(o, o.label);
+      break;
+    }
+    case "boxplot": {
+      const data = Array.isArray(o.data) ? o.data.map(Number).filter(isFinite).sort((p,q)=>p-q) : [];
+      if (data.length < 4){ runtimeErrors.push(w+".data needs at least four numbers."); break; }
+      // Five-number summary computed here, not supplied.
+      const q = k => {
+        const pos = (data.length-1)*k, lo = Math.floor(pos), hi = Math.ceil(pos);
+        return data[lo] + (data[hi]-data[lo])*(pos-lo);
+      };
+      const five = [data[0], q(0.25), q(0.5), q(0.75), data[data.length-1]];
+      const axisPos = o.at !== undefined ? num(o.at, w+".at", 0)() : 0;
+      board.create("boxplot", [five, axisPos, o.width || 0.8], {
+        strokeColor: C(o), fillColor: C(o), fillOpacity: 0.16, strokeWidth: 1.8,
+        dir: o.orientation === "vertical" ? "vertical" : "horizontal", highlight:false
+      });
+      if (model.display.readouts) readouts.push({
+        label: o.label || "five-number summary",
+        get: ()=> five.map(v=>fmt(v,2)).join(" · ")
+      });
+      noteLegend(o, o.label);
+      break;
+    }
+
+    /* ---- number line --------------------------------------------------- */
+    case "interval": {
+      const a = num(o.from, w+".from", 0)(), b2 = num(o.to, w+".to", 1)();
+      if (a >= b2){ runtimeErrors.push(w+": from must be less than to."); break; }
+      const yPos = o.at !== undefined ? num(o.at, w+".at", 0)() : 0;
+      board.create("segment", [[a,yPos],[b2,yPos]], {
+        strokeColor: C(o), strokeWidth: 6, highlight:false, fixed:true, opacity:0.55
+      });
+      const closedL = o.closed === true || (Array.isArray(o.closed) && o.closed[0]);
+      const closedR = o.closed === true || (Array.isArray(o.closed) && o.closed[1]);
+      [[a,closedL],[b2,closedR]].forEach(([xv, filled])=>{
+        board.create("point", [xv, yPos], {
+          size: 4, strokeColor: C(o), strokeWidth: 2, fillColor: filled ? C(o) : "#ffffff",
+          fixed:true, name:"", withLabel:false, highlight:false
+        });
+      });
+      if (o.label) legend.push({ label: o.label, color: C(o), style:"solid" });
+      break;
+    }
+    case "tick": {
+      const xv = num(o.at, w+".at", 0)();
+      board.create("point", [xv, 0], { size:3.5, fillColor:C(o), strokeColor:"#fff", strokeWidth:1.5,
+        fixed:true, name:o.label||"", withLabel:!!o.label, highlight:false,
+        label:{fontSize:12, offset:[0,-18], strokeColor:C(o)} });
+      break;
+    }
+    case "label": {
+      const c = pt(o.at, w+".at"); if (!c) break;
+      board.create("text", [c[0], c[1], String(o.text || "")], {
+        fontSize: 12.5, strokeColor: C(o), fixed:true, highlight:false, anchorX:o.anchor||"left"
+      });
+      break;
+    }
+    }
+  }
+
+  function drawBars(o, bars, cats){
+    bars.forEach((bar, k)=>{
+      const [lo, hi, h] = bar;
+      if (h === 0) return;
+      board.create("polygon", [[lo,0],[hi,0],[hi,h],[lo,h]], {
+        fillColor: C(o), fillOpacity: 0.34, highlight:false, fixed:true, withLines:true,
+        borders: { strokeColor: C(o), strokeWidth: 1.4, highlight:false }, vertices:{visible:false}
+      });
+      if (cats) board.create("text", [(lo+hi)/2, -Math.abs(h)*0.08 - 0.02, cats[k]], {
+        fontSize:11, anchorX:"middle", strokeColor:"#6b7280", fixed:true, highlight:false
+      });
+    });
+  }
+
+  /* --- if drawing turned up a problem, replace the figure with the reason */
+  if (runtimeErrors.length){
+    JXG.JSXGraph.freeBoard(board);
+    container.innerHTML =
+      '<div class="mv-error"><h4 class="t-h5">This figure was not drawn</h4><ul class="t-body2">' +
+      runtimeErrors.map(e=>'<li>'+escapeHtml(e)+'</li>').join("") +
+      '</ul></div>';
+    runtimeErrors.forEach(e=>{ if (callbacks.onError) callbacks.onError(e); });
+    return { submit: ()=>null, unmount: ()=>{ container.innerHTML=""; } };
+  }
+
+  /* --- params, readouts, legend, footer -------------------------------- */
+  const root = container.querySelector(".mv");
+  const paramHost = root.querySelector(".js-params");
+  if (model.params.length){
+    paramHost.className = "mv-params";
+    model.params.forEach(p=>{
+      const row = document.createElement("div");
+      row.className = "mv-param";
+      row.innerHTML =
+        '<span class="mv-param-label t-body2">'+escapeHtml(p.label)+'</span>' +
+        '<input type="range" min="'+p.min+'" max="'+p.max+'" step="'+p.step+'" value="'+p.value+'" ' +
+          'aria-label="'+escapeHtml(p.label)+'">' +
+        '<span class="mv-param-val"></span>';
+      const input = row.querySelector("input"), out = row.querySelector(".mv-param-val");
+      const dp = p.integer ? 0 : (p.step >= 1 ? 0 : String(p.step).split(".")[1] || "").length;
+      const show = ()=>{ out.textContent = JXG.toFixed(P[p.name], dp); };
+      input.addEventListener("input", ()=>{
+        P[p.name] = p.integer ? Math.round(Number(input.value)) : Number(input.value);
+        show(); board.update(); renderReadouts();
+      });
+      show();
+      paramHost.appendChild(row);
+    });
+  }
+
+  const readoutHost = root.querySelector(".js-readouts");
+  function renderReadouts(){
+    if (!model.display.readouts || readouts.length === 0) return;
+    readoutHost.className = "mv-readouts";
+    readoutHost.innerHTML = readouts.map(r=>
+      '<span class="mv-readout"><span class="k">'+escapeHtml(r.label)+'</span>' +
+      '<span class="v">'+escapeHtml(safeGet(r))+'</span></span>'
+    ).join("");
+  }
+  function safeGet(r){ try { return String(r.get()); } catch(e){ return "—"; } }
+  renderReadouts();
+
+  // Anything draggable keeps the readouts honest as it moves.
+  board.on("update", renderReadouts);
+
+  const legendHost = root.querySelector(".js-legend");
+  if (model.display.legend && legend.length){
+    legendHost.className = "mv-legend";
+    legendHost.innerHTML = legend.map(l=>
+      '<span class="item t-body2"><span class="swatch'+(l.style==="dashed"?" dashed":"")+'" ' +
+      'style="'+(l.style==="dashed"?"color:"+l.color:"background:"+l.color)+'"></span>' +
+      escapeHtml(l.label)+'</span>'
+    ).join("");
+  }
+
+  const warnHost = root.querySelector(".js-warn");
+  if (warnings.length){
+    warnHost.className = "mv-warn";
+    warnHost.textContent = warnings.join("  ·  ");
+  }
+
+  const hintEl = root.querySelector(".mv-foot .hint");
+  const interactive = model.params.length > 0 || model.objects.some(o=>o.draggable);
+  hintEl.textContent = model.display.hint || (interactive
+    ? (model.params.length ? "Drag the slider to change the figure." : "Drag the points to change the figure.")
+    : "");
+
+  return {
+    // View-only by contract. The host will not render a submit button for a
+    // plugin whose manifest says submits:false, and this is the belt to that
+    // brace: there is never anything to send.
+    submit: ()=>null,
+    unmount: ()=>{
+      try { resizeObserver.disconnect(); } catch(e){}
+      try { board.off("update", renderReadouts); JXG.JSXGraph.freeBoard(board); } catch(e){}
+      container.innerHTML = "";
+    }
+  };
+}
+
+/* ---- small helpers --------------------------------------------------- */
+function deepMerge(a, b){
+  const out = Object.assign({}, a);
+  Object.keys(b||{}).forEach(k=>{
+    out[k] = (b[k] && typeof b[k]==="object" && !Array.isArray(b[k]) && a[k] && typeof a[k]==="object")
+      ? deepMerge(a[k], b[k]) : b[k];
+  });
+  return out;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+
+/* ======================================================================
+   FIXTURES
+   ====================================================================== */
+const FIXTURES = [
+  {
+    id:"riemann",
+    name:"1 · Calculus — Riemann sums converging on an integral",
+    desc:"The classic. Drag n and watch the midpoint sum walk toward 8/3. Both numbers below the figure are computed "+
+         "at render time: at n=4 the midpoint sum is exactly 2.625, and the shaded exact area is 2.6667. Nothing in "+
+         "the declaration contains either of those values.",
+    before:"Here's the area we're trying to measure, chopped into rectangles.",
+    after:"Push n up to 40. What happens to the gap between the two numbers — and does it ever close completely?",
+    inputs:{
+      title:"Approximating the area under f(x) = x²",
+      board:{ x:[-0.4, 2.6], y:[-0.7, 5.2], axes:{ xLabel:"x", yLabel:"y" } },
+      params:[ { name:"n", label:"rectangles", value:4, min:1, max:40, step:1, integer:true } ],
+      objects:[
+        { id:"f", type:"function", expr:"x^2", label:"f(x) = x²", color:"primary" },
+        { type:"integral", of:"f", from:0, to:2, label:"exact area", color:"secondary" },
+        { type:"riemann", of:"f", from:0, to:2, n:"n", method:"middle", label:"midpoint sum", color:"accent" }
+      ],
+      display:{ height:"m" }
+    }
+  },
+  {
+    id:"inscribed",
+    name:"2 · Geometry — inscribed angle theorem (draggable)",
+    desc:"P is a glider on the circle. Drag it anywhere on the major arc and the two angle measures are re-read from "+
+         "the construction each frame. The inscribed angle stays exactly half the central angle — which is the theorem, "+
+         "demonstrated rather than asserted.",
+    before:"A and B are fixed. P can sit anywhere on the circle.",
+    after:"Drag P right around the arc. One of these two numbers never changes, and the other never changes either. Which is which, and why?",
+    inputs:{
+      title:"Inscribed angle vs central angle",
+      board:{ x:[-3.4, 3.4], y:[-2.6, 3.4], aspect:"equal", grid:false, axes:false },
+      objects:[
+        { id:"O", type:"point", at:[0,0], label:"O", color:"muted" },
+        { id:"c", type:"circle", center:"O", radius:2.4, color:"muted", style:"solid", showCenter:true },
+        { id:"A", type:"point", on:"c", at:3.14159265, label:"A", color:"primary", draggable:false },
+        { id:"B", type:"point", on:"c", at:1.57079633, label:"B", color:"primary", draggable:false },
+        { id:"P", type:"point", on:"c", at:-1.17079633, label:"P", color:"accent" },
+        { type:"segment", points:["A","O"], color:"secondary" },
+        { type:"segment", points:["B","O"], color:"secondary" },
+        { type:"segment", points:["A","P"], color:"accent" },
+        { type:"segment", points:["B","P"], color:"accent" },
+        { type:"angle", points:["B","O","A"], label:"central ∠AOB", color:"secondary", radius:0.6 },
+        { type:"angle", points:["B","P","A"], label:"inscribed ∠APB", color:"accent", radius:0.75 }
+      ],
+      display:{ height:"l", legend:false, hint:"Drag P around the circle." }
+    }
+  },
+  {
+    id:"regression",
+    name:"3 · Statistics — scatter, least-squares fit, r²",
+    desc:"Twelve raw pairs go in. The slope, the intercept and r² all come out of the regression — the declaration "+
+         "contains no line and no coefficients. Change a single data point and every number below updates.",
+    before:"Twelve stores: weekly ad spend against weekly revenue.",
+    after:"The fit says each extra $1 of spend is worth about $3.20 of revenue. Given r², how much would you bet on that number holding for a store spending $900?",
+    inputs:{
+      title:"Ad spend vs revenue, 12 stores",
+      caption:"Each point is one store's week. The line is fitted, not drawn by hand.",
+      board:{ x:[0, 850], y:[0, 3200], axes:{ xLabel:"spend ($)", yLabel:"revenue ($)" }, grid:true },
+      objects:[
+        { id:"s", type:"scatter", color:"primary", label:"stores",
+          data:[[120,560],[180,690],[210,940],[260,880],[310,1180],[340,1290],
+                [420,1460],[470,1720],[520,1610],[600,2080],[680,2310],[760,2540]] },
+        { type:"bestfit", of:"s", degree:1, label:"least-squares line", color:"accent" }
+      ],
+      display:{ height:"m" }
+    }
+  },
+  {
+    id:"transform",
+    name:"4 · Algebra — a sliding parabola, three live sliders",
+    desc:"Vertex form with a, h and k all on sliders, and the vertex marked as a computed point rather than a "+
+         "hard-coded coordinate. Every slider references the same single declaration — there is no second figure.",
+    before:"Same parabola, three dials.",
+    after:"Set a to a negative number. Which of the three sliders moves the vertex, and which one only changes the shape?",
+    inputs:{
+      title:"f(x) = a(x − h)² + k",
+      board:{ x:[-6, 6], y:[-6, 8], axes:{ xLabel:"x", yLabel:"y" } },
+      params:[
+        { name:"a", label:"a", value:1,  min:-3, max:3, step:0.1 },
+        { name:"h", label:"h", value:0,  min:-4, max:4, step:0.1 },
+        { name:"k", label:"k", value:0,  min:-4, max:4, step:0.1 }
+      ],
+      objects:[
+        { id:"f", type:"function", expr:"a*(x-h)^2 + k", label:"f(x)", color:"primary" },
+        { id:"base", type:"function", expr:"x^2", label:"y = x² (reference)", color:"muted", style:"dashed" },
+        { id:"V", type:"point", on:"f", at:"h", label:"vertex", color:"accent", showValue:true, draggable:false }
+      ],
+      display:{ height:"m" }
+    }
+  },
+  {
+    id:"trig",
+    name:"5 · Trigonometry — tangent and secant on a moving point",
+    desc:"A tangent whose slope is read from a numerical derivative, and a secant whose average rate of change is "+
+         "read from its two endpoints. Both gliders are draggable; both readouts follow.",
+    before:"Two different questions about the same curve, side by side.",
+    after:"Drag the two secant points closer together. What is the secant's number converging on?",
+    inputs:{
+      title:"Instantaneous vs average rate of change",
+      board:{ x:[-0.3, 6.6], y:[-1.8, 1.8], axes:{ xLabel:"x", yLabel:"y" } },
+      objects:[
+        { id:"f", type:"function", expr:"sin(x)", label:"f(x) = sin x", color:"primary" },
+        { type:"tangent", of:"f", at:1.0, label:"tangent slope", color:"accent" },
+        { type:"secant", of:"f", from:2.2, to:4.6, label:"average rate, 2.2 → 4.6", color:"secondary", style:"dashed" }
+      ],
+      display:{ height:"m" }
+    }
+  },
+  {
+    id:"triangle",
+    name:"6 · Trigonometry — a right triangle, drawn off the coordinate axes",
+    desc:"board.axes: false turns off the axis lines and ticks entirely — for a construction like this, the coordinate "+
+         "frame isn't part of the lesson and drawing it anyway is noise. All three side lengths and both marked angles "+
+         "are read off the points, not typed in: drag any vertex and every number below follows, including whether "+
+         "∠B is still a right angle.",
+    before:"Same idea as the polygon-angle-sum figure, but framed as a trig triangle: three sides, two marked angles.",
+    after:"Drag C so the triangle is no longer 3-4-5. Does ∠A + ∠B + ∠C still land on 180°, even though none of the sides read the same anymore?",
+    inputs:{
+      title:"A 3–4–5 right triangle",
+      board:{ x:[-1.2, 6], y:[-1, 4.6], aspect:"equal", grid:false, axes:false },
+      objects:[
+        { id:"A", type:"point", at:[0,0], label:"A", color:"primary" },
+        { id:"B", type:"point", at:[4,0], label:"B", color:"primary" },
+        { id:"C", type:"point", at:[4,3], label:"C", color:"primary" },
+        { type:"segment", points:["A","B"], label:"AB", color:"secondary", showValue:true },
+        { type:"segment", points:["B","C"], label:"BC", color:"secondary", showValue:true },
+        { type:"segment", points:["C","A"], label:"CA", color:"accent", showValue:true },
+        { type:"angle", points:["C","B","A"], label:"∠B", color:"violet", radius:0.5 },
+        { type:"angle", points:["B","A","C"], label:"∠A", color:"teal", radius:0.9 }
+      ],
+      display:{ height:"m", legend:false, hint:"Drag any vertex." }
+    }
+  },
+  {
+    id:"variety",
+    name:"7 · Curves — polar, implicit, parametric and an inequality",
+    desc:"Four different curve families in one figure to show the schema is not just a function plotter: a cardioid "+
+         "in polar form, a lemniscate as an implicit equation, a Lissajous curve in parametric form, and a shaded "+
+         "half-plane. All four are declared the same way.",
+    before:"Four curves that a y = f(x) plotter cannot draw.",
+    after:"Only one of these four passes the vertical line test. Which one, and what does that tell you about the other three?",
+    inputs:{
+      title:"Curves that aren't functions of x",
+      board:{ x:[-3.2, 3.2], y:[-2.4, 2.4], aspect:"equal", axes:{ xLabel:"x", yLabel:"y" } },
+      objects:[
+        { type:"polar", r:"1 + cos(t)", tRange:[0, 6.283185307], label:"cardioid  r = 1 + cos θ", color:"primary" },
+        { type:"implicit", expr:"(x^2+y^2)^2 - 4*(x^2-y^2)", label:"lemniscate  (x²+y²)² = 4(x²−y²)", color:"accent" },
+        { type:"parametric", x:"2.6*sin(3*t)", y:"1.9*sin(2*t)", tRange:[0, 6.283185307],
+          label:"Lissajous", color:"violet", style:"dashed" }
+      ],
+      display:{ height:"l" }
+    }
+  },
+  {
+    id:"numberline",
+    name:"8 · Number line — intervals with open and closed endpoints",
+    desc:"A different board type from the same schema. Open vs closed endpoints are declared, and the difference is "+
+         "drawn correctly — hollow vs filled — which is exactly the detail a freehand drawing gets wrong.",
+    before:"The solution set of |x − 1| ≥ 2, and the interval it excludes.",
+    after:"Why is the middle interval drawn with hollow circles while the outer two are filled?",
+    inputs:{
+      title:"Solution set of |x − 1| ≥ 2",
+      board:{ type:"numberline", x:[-5.5, 6.5], y:[-1.1, 1.1], axes:{ xLabel:"x" } },
+      objects:[
+        { type:"interval", from:-5.2, to:-1, closed:[false,true], at:0, label:"x ≤ −1", color:"primary" },
+        { type:"interval", from:3, to:6.2, closed:[true,false], at:0, label:"x ≥ 3", color:"primary" },
+        { type:"interval", from:-1, to:3, closed:[false,false], at:0.55, label:"excluded: −1 < x < 3", color:"muted" },
+        { type:"tick", at:-1, label:"−1", color:"primary" },
+        { type:"tick", at:3, label:"3", color:"primary" }
+      ],
+      display:{ height:"s", readouts:false }
+    }
+  },
+  {
+    id:"autoframe",
+    name:"9 · Auto-framing — board.y left out on a function with a pole",
+    desc:"board.y is deliberately absent. tan(x) runs to ±∞ inside this window, so a naive frame would be ±10⁶ and the "+
+         "curve would collapse onto the axis. The plugin samples the curve, trims the top and bottom 2% and frames "+
+         "what is actually there. Delete the pole and relaunch to see the frame follow.",
+    before:"I didn't tell it what y-range to use here.",
+    after:"The asymptotes are at ±π/2. Can you read roughly where those fall on the axis?",
+    inputs:{
+      title:"y = tan(x), framed automatically",
+      board:{ x:[-4.7, 4.7], axes:{ xLabel:"x", yLabel:"y" } },
+      objects:[
+        { id:"f", type:"function", expr:"tan(x)", label:"y = tan x", color:"primary" },
+        { type:"asymptote", at:1.5707963, orientation:"vertical", label:"x = π/2" },
+        { type:"asymptote", at:-1.5707963, orientation:"vertical", label:"x = −π/2" }
+      ],
+      display:{ height:"m", readouts:false }
+    }
+  },
+  {
+    id:"invalid",
+    name:"10 · Invalid declaration — four different mistakes",
+    desc:"Every one of these is the kind of thing a tutor gets wrong: an unknown object type, a tangent taken on a "+
+         "circle instead of a function, an `of` pointing at an id that doesn't exist, and a typo'd expression. "+
+         "The figure is refused with reasons rather than drawn approximately.",
+    before:"Watch what happens when the declaration doesn't hold together.",
+    after:"",
+    inputs:{
+      title:"This one does not draw",
+      board:{ x:[-4,4] },
+      objects:[
+        { id:"c", type:"circle", center:[0,0], radius:2 },
+        { type:"tangent", of:"c", at:1 },
+        { type:"riemann", of:"nope", from:0, to:1, n:4 },
+        { id:"g", type:"function", expr:"x^2 +* 3" },
+        { type:"vectorfield", data:[] }
+      ]
+    }
+  }
+];
+
+/* ======================================================================
+   HOST GLUE
+   ====================================================================== */
+const $ = id => document.getElementById(id);
+let instance = null;
+
+function log(tag, msg, isErr){
+  const row = document.createElement("div");
+  row.className = "row" + (isErr ? " err" : "");
+  row.innerHTML = '<span class="tag t-mono">'+escapeHtml(tag)+'</span><span class="msg t-body2">'+escapeHtml(msg)+'</span>';
+  $("callbackLog").prepend(row);
+}
+
+function launch(inputs, meta){
+  if (instance && instance.unmount) { try { instance.unmount(); } catch(e){} }
+  $("msgBefore").textContent = (meta && meta.before) || "Let's look at this one together.";
+  const after = meta && meta.after;
+  $("msgAfter").textContent = after || "";
+  $("msgAfter").style.display = after ? "" : "none";
+  const t0 = performance.now();
+  instance = mount($("pluginHost"), inputs, {
+    onError: m => log("onError", m, true)
+  });
+  log("mount", "rendered inline in " + Math.round(performance.now()-t0) + "ms · submit() → " +
+    JSON.stringify(instance.submit()));
+}
+
+function selectFixture(id){
+  const f = FIXTURES.find(x=>x.id===id) || FIXTURES[0];
+  $("fixtureDesc").textContent = f.desc;
+  $("jsonInputs").value = JSON.stringify(f.inputs, null, 2);
+  $("jsonError").textContent = "";
+  $("jsonInputs").dataset.meta = JSON.stringify({ before:f.before, after:f.after });
+  return f;
+}
+
+function launchFromEditor(){
+  let parsed;
+  try { parsed = JSON.parse($("jsonInputs").value); }
+  catch(e){ $("jsonError").textContent = "JSON is not parseable: " + e.message; return; }
+  $("jsonError").textContent = "";
+  let meta = {};
+  try { meta = JSON.parse($("jsonInputs").dataset.meta || "{}"); } catch(e){}
+  launch(parsed, meta);
+}
+
+FIXTURES.forEach(f=>{
+  const opt = document.createElement("option");
+  opt.value = f.id; opt.textContent = f.name;
+  $("fixtureSelect").appendChild(opt);
+});
+$("fixtureSelect").addEventListener("change", e=>{ const f = selectFixture(e.target.value); launch(f.inputs, f); });
+$("btnLaunch").addEventListener("click", ()=>{ const f = selectFixture($("fixtureSelect").value); launch(f.inputs, f); });
+$("btnLaunchJson").addEventListener("click", launchFromEditor);
+
+$("btnWide").addEventListener("click", ()=>{
+  $("chatCol").classList.remove("narrow");
+  $("btnWide").classList.add("active"); $("btnNarrow").classList.remove("active");
+  window.dispatchEvent(new Event("resize"));
+});
+$("btnNarrow").addEventListener("click", ()=>{
+  $("chatCol").classList.add("narrow");
+  $("btnNarrow").classList.add("active"); $("btnWide").classList.remove("active");
+  window.dispatchEvent(new Event("resize"));
+});
+
+const first = selectFixture(FIXTURES[0].id);
+launch(first.inputs, first);
+</script>
+</body>
+</html>

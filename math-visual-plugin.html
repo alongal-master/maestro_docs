@@ -470,9 +470,13 @@ function autoFrame(model, fns){
   const ys = [];
   const N = 400;
   model.objects.forEach(o=>{
-    const f = fns[o.__where];
-    if (!f) return;
     if (o.type === "function" || o.type === "derivative"){
+      // Only these two need a compiled function, so only they look one up —
+      // an unconditional lookup here used to short-circuit every other
+      // branch below it (point, scatter, histogram, bar don't populate fns),
+      // silently disabling auto-framing for all of them.
+      const f = fns[o.__where];
+      if (!f) return;
       for (let i=0;i<=N;i++){
         const x = x0 + (x1-x0)*i/N;
         const v = f(x);
@@ -482,6 +486,23 @@ function autoFrame(model, fns){
       ys.push(Number(o.at[1]));
     } else if (o.type === "scatter" && Array.isArray(o.data)){
       o.data.forEach(p=>{ if (Array.isArray(p) && isFinite(p[1])) ys.push(Number(p[1])); });
+    } else if (o.type === "histogram" && Array.isArray(o.data)){
+      // Mirrors the real binning in buildObject() closely enough to frame
+      // correctly; param-referenced binWidth/from fall back to a literal
+      // reading here (autoFrame runs before params are wired to fns), which
+      // only affects the auto-picked window, never the rendered bins.
+      const data = o.data.map(Number).filter(isFinite);
+      if (data.length){
+        const width = (typeof o.binWidth === "number" && o.binWidth > 0) ? o.binWidth : 1;
+        const start = (typeof o.from === "number") ? o.from : Math.floor(Math.min.apply(null,data)/width)*width;
+        const end = Math.max.apply(null, data);
+        const bins = Math.max(1, Math.ceil((end-start)/width + 1e-9));
+        const heights = new Array(bins).fill(0);
+        data.forEach(v=>{ const k = Math.min(bins-1, Math.floor((v-start)/width)); if (k>=0) heights[k]++; });
+        ys.push(0, Math.max.apply(null, heights));
+      }
+    } else if (o.type === "bar" && Array.isArray(o.values)){
+      o.values.forEach(v=>{ if (isFinite(Number(v))) ys.push(0, Number(v)); });
     }
   });
   if (ys.length === 0) return [-4, 4];
@@ -1352,8 +1373,28 @@ const FIXTURES = [
     }
   },
   {
+    id:"histogram",
+    name:"4 · Statistics — histogram of a distribution's shape",
+    desc:"Thirty raw scores go in — nothing else. The bin edges, the count in each bin, and the y-axis height are all "+
+         "computed from the data: the declaration contains no counts and no y-range (board.y is left out on purpose, "+
+         "the same auto-framing fixture 10 demonstrates for a curve). Change binWidth from 10 to 5 and relaunch to see "+
+         "every bar recompute.",
+    before:"Thirty students, one quiz. Same raw scores as always — no pre-built bars.",
+    after:"With bins of width 10 the distribution reads as roughly one-humped. Try binWidth: 5 in the JSON above and relaunch — does the shape still look one-humped, or does it start to look bumpier just from a finer bin width?",
+    inputs:{
+      title:"Distribution of scores, 30 students",
+      caption:"Bin width 10, starting at 50.",
+      board:{ x:[45, 100], axes:{ xLabel:"score", yLabel:"students" } },
+      objects:[
+        { type:"histogram", color:"primary", label:"scores", binWidth:10, from:50,
+          data:[55,58,62,64,66,68,70,71,72,73,74,75,76,77,78,78,79,80,81,82,83,84,85,86,87,88,90,91,93,95] }
+      ],
+      display:{ height:"m" }
+    }
+  },
+  {
     id:"transform",
-    name:"4 · Algebra — a sliding parabola, three live sliders",
+    name:"5 · Algebra — a sliding parabola, three live sliders",
     desc:"Vertex form with a, h and k all on sliders, and the vertex marked as a computed point rather than a "+
          "hard-coded coordinate. Every slider references the same single declaration — there is no second figure.",
     before:"Same parabola, three dials.",
@@ -1376,7 +1417,7 @@ const FIXTURES = [
   },
   {
     id:"trig",
-    name:"5 · Trigonometry — tangent and secant on a moving point",
+    name:"6 · Trigonometry — tangent and secant on a moving point",
     desc:"A tangent whose slope is read from a numerical derivative, and a secant whose average rate of change is "+
          "read from its two endpoints. Both gliders are draggable; both readouts follow.",
     before:"Two different questions about the same curve, side by side.",
@@ -1394,7 +1435,7 @@ const FIXTURES = [
   },
   {
     id:"triangle",
-    name:"6 · Trigonometry — a right triangle, drawn off the coordinate axes",
+    name:"7 · Trigonometry — a right triangle, drawn off the coordinate axes",
     desc:"board.axes: false turns off the axis lines and ticks entirely — for a construction like this, the coordinate "+
          "frame isn't part of the lesson and drawing it anyway is noise. All three side lengths and both marked angles "+
          "are read off the points, not typed in: drag any vertex and every number below follows, including whether "+
@@ -1419,7 +1460,7 @@ const FIXTURES = [
   },
   {
     id:"variety",
-    name:"7 · Curves — polar, implicit, parametric and an inequality",
+    name:"8 · Curves — polar, implicit, parametric and an inequality",
     desc:"Four different curve families in one figure to show the schema is not just a function plotter: a cardioid "+
          "in polar form, a lemniscate as an implicit equation, a Lissajous curve in parametric form, and a shaded "+
          "half-plane. All four are declared the same way.",
@@ -1439,7 +1480,7 @@ const FIXTURES = [
   },
   {
     id:"numberline",
-    name:"8 · Number line — intervals with open and closed endpoints",
+    name:"9 · Number line — intervals with open and closed endpoints",
     desc:"A different board type from the same schema. Open vs closed endpoints are declared, and the difference is "+
          "drawn correctly — hollow vs filled — which is exactly the detail a freehand drawing gets wrong.",
     before:"The solution set of |x − 1| ≥ 2, and the interval it excludes.",
@@ -1459,7 +1500,7 @@ const FIXTURES = [
   },
   {
     id:"autoframe",
-    name:"9 · Auto-framing — board.y left out on a function with a pole",
+    name:"10 · Auto-framing — board.y left out on a function with a pole",
     desc:"board.y is deliberately absent. tan(x) runs to ±∞ inside this window, so a naive frame would be ±10⁶ and the "+
          "curve would collapse onto the axis. The plugin samples the curve, trims the top and bottom 2% and frames "+
          "what is actually there. Delete the pole and relaunch to see the frame follow.",
@@ -1478,7 +1519,7 @@ const FIXTURES = [
   },
   {
     id:"invalid",
-    name:"10 · Invalid declaration — four different mistakes",
+    name:"11 · Invalid declaration — four different mistakes",
     desc:"Every one of these is the kind of thing a tutor gets wrong: an unknown object type, a tangent taken on a "+
          "circle instead of a function, an `of` pointing at an id that doesn't exist, and a typo'd expression. "+
          "The figure is refused with reasons rather than drawn approximately.",
